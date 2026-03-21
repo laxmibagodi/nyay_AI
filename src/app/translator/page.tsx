@@ -56,7 +56,7 @@ export default function TranslatorPage() {
       if (result) {
         setAnalysis(result)
         
-        // Save metadata to Firestore
+        // Save metadata to Firestore Legal Vault
         if (user && db) {
           const docRef = collection(db, "users", user.uid, "documents")
           addDocumentNonBlocking(docRef, {
@@ -67,14 +67,20 @@ export default function TranslatorPage() {
             uploadDate: new Date().toISOString(),
             status: "processed",
             description: result.summary,
-            content: content // Storing content for assistant context
+            content: content
+          })
+          
+          toast({
+            title: "Vault Synced",
+            description: "Translation has been securely stored in your Legal Vault.",
+          })
+        } else {
+          toast({
+            title: "Vault Unreachable",
+            description: "Establishing intelligence connection. Please retry in a moment.",
+            variant: "destructive"
           })
         }
-
-        toast({
-          title: "Translation Complete",
-          description: "Legal jargon has been simplified and saved to your vault.",
-        })
       }
     } catch (error) {
       toast({

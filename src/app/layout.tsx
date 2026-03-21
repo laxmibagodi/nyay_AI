@@ -1,8 +1,10 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import {SidebarProvider} from '@/components/ui/sidebar';
 import {Toaster} from '@/components/ui/toaster';
 import {FirebaseClientProvider} from '@/firebase';
+import {AuthInitializer} from '@/components/auth-initializer';
 
 export const metadata: Metadata = {
   title: 'Nyay AI - Legal Shield for Small Businesses',
@@ -23,6 +25,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-background text-foreground">
         <FirebaseClientProvider>
+          <AuthInitializer />
           <SidebarProvider defaultOpen={true}>
             {children}
           </SidebarProvider>

@@ -55,7 +55,7 @@ export default function RisksPage() {
       const result = await identifyContractRisks({ contractContent: content })
       setAnalysis(result)
 
-      // Save metadata to Firestore for the Legal Vault
+      // Save metadata to Firestore Legal Vault
       if (user && db) {
         const docRef = collection(db, "users", user.uid, "documents")
         addDocumentNonBlocking(docRef, {
@@ -68,12 +68,18 @@ export default function RisksPage() {
           description: result.summary,
           content: content
         })
+        
+        toast({
+          title: "Scan Complete",
+          description: "Vulnerabilities have been identified and saved to your vault.",
+        })
+      } else {
+        toast({
+          title: "Identity Pending",
+          description: "Securing your vault connection. Please try again in 2 seconds.",
+          variant: "destructive"
+        })
       }
-
-      toast({
-        title: "Scan Complete",
-        description: "Vulnerabilities have been identified and saved to your vault.",
-      })
 
     } catch (error) {
       toast({
