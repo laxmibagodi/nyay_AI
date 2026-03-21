@@ -6,9 +6,12 @@ import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { MessageSquareQuote, Send, Loader2, Bot, User, ShieldAlert, Sparkles } from "lucide-react"
+import { MessageSquareQuote, Send, Loader2, Bot, User, ShieldAlert, Sparkles, Files, ChevronDown } from "lucide-react"
 import { getLegalScenarioGuidance, GetLegalScenarioGuidanceOutput } from "@/ai/flows/get-legal-guidance-flow"
 import { useToast } from "@/hooks/use-toast"
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { collection, query, orderBy } from "firebase/firestore"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface Message {
   role: 'user' | 'assistant';
@@ -18,12 +21,25 @@ interface Message {
 
 export default function AssistantPage() {
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Hello! I'm your Nyay AI Legal Assistant. You can ask me 'what-if' scenarios or specific legal questions for your business. How can I help today?" }
+    { role: 'assistant', content: "Hello! I'm your Nyay AI Legal Assistant. You can ask me 'what-if' scenarios or select a recent document to discuss. How can I help today?" }
   ])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [selectedDoc, setSelectedDoc] = useState<any>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
+  const { user } = useUser()
+  const db = useFirestore()
+
+  const docsQuery = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return query(
+      collection(db, "users", user.uid, "documents"),
+      orderBy("uploadDate", "desc")
+    )
+  }, [db, user])
+
+  const { data: documents } = useCollection(docsQuery)
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -40,7 +56,15 @@ export default function AssistantPage() {
     setIsLoading(true)
 
     try {
-      const result = await getLegalScenarioGuidance({ scenarioQuestion: userMessage })
+      const businessContext = selectedDoc 
+        ? `The user is referring to the document: ${selectedDoc.filename}. Document summary: ${selectedDoc.description}. Document content: ${selectedDoc.content}` 
+        : undefined
+
+      const result = await getLegalScenarioGuidance({ 
+        scenarioQuestion: userMessage,
+        businessContext 
+      })
+
       setMessages(prev => [...prev, { 
         role: 'assistant', 
         content: result.guidance,
@@ -65,7 +89,7 @@ export default function AssistantPage() {
         </header>
         <main className="flex-1 p-6 flex flex-col max-w-5xl mx-auto w-full h-[calc(100vh-4rem)]">
           <Card className="flex-1 flex flex-col overflow-hidden shadow-xl border-t-4 border-t-accent">
-            <CardHeader className="border-b bg-muted/20">
+            <CardHeader className="border-b bg-muted/20 flex flex-row items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white">
                   <Bot className="h-6 w-6" />
@@ -77,6 +101,31 @@ export default function AssistantPage() {
                   </p>
                 </div>
               </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Files className="h-4 w-4" />
+                    {selectedDoc ? selectedDoc.filename : "Select Document"}
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                  <DropdownMenuLabel>Recent Vault Docs</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setSelectedDoc(null)}>
+                    None (General Chat)
+                  </DropdownMenuItem>
+                  {documents?.map(doc => (
+                    <DropdownMenuItem key={doc.id} onClick={() => setSelectedDoc(doc)}>
+                      {doc.filename}
+                    </DropdownMenuItem>
+                  ))}
+                  {(!documents || documents.length === 0) && (
+                    <DropdownMenuItem disabled>No documents found</DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </CardHeader>
             <CardContent ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6">
               {messages.map((msg, idx) => (
@@ -127,13 +176,20 @@ export default function AssistantPage() {
                 </div>
               )}
             </CardContent>
-            <CardFooter className="p-4 border-t bg-muted/10">
+            <CardFooter className="p-4 border-t bg-muted/10 flex flex-col gap-2">
+              {selectedDoc && (
+                <div className="w-full px-2">
+                  <span className="text-[10px] font-bold text-accent uppercase flex items-center gap-1">
+                    <Files className="h-3 w-3" /> Discussing: {selectedDoc.filename}
+                  </span>
+                </div>
+              )}
               <form 
                 onSubmit={(e) => { e.preventDefault(); handleSend(); }}
                 className="w-full flex gap-2"
               >
                 <Input 
-                  placeholder="Ask a what-if legal scenario... (e.g., 'What if a client refuses to pay for delivered work?')"
+                  placeholder={selectedDoc ? `Ask about "${selectedDoc.filename}"...` : "Ask a what-if legal scenario..."}
                   className="flex-1 h-12 bg-white shadow-sm"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}

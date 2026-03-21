@@ -21,6 +21,9 @@ import {
 import { translateLegalJargon, TranslateLegalJargonOutput } from "@/ai/flows/translate-legal-jargon-flow"
 import { useToast } from "@/hooks/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useUser, useFirestore } from "@/firebase"
+import { collection, doc } from "firebase/firestore"
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
 export default function TranslatorPage() {
   const [content, setContent] = useState("")
@@ -29,6 +32,8 @@ export default function TranslatorPage() {
   const [fileName, setFileName] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
+  const { user } = useUser()
+  const db = useFirestore()
 
   const handleTranslate = async () => {
     if (!content.trim()) {
@@ -41,21 +46,34 @@ export default function TranslatorPage() {
     }
 
     setIsLoading(true)
-    setAnalysis(null) // Reset results before new call
+    setAnalysis(null)
     
     try {
       const result = await translateLegalJargon({ documentContent: content })
       if (result) {
         setAnalysis(result)
+        
+        // Save metadata to Firestore
+        if (user && db) {
+          const docRef = collection(db, "users", user.uid, "documents")
+          addDocumentNonBlocking(docRef, {
+            userId: user.uid,
+            filename: fileName || `Translation-${new Date().getTime()}.txt`,
+            storagePath: "in-memory",
+            mimeType: "text/plain",
+            uploadDate: new Date().toISOString(),
+            status: "processed",
+            description: result.summary,
+            content: content // Storing content for assistant context
+          })
+        }
+
         toast({
           title: "Translation Complete",
           description: "Legal jargon has been simplified.",
         })
-      } else {
-        throw new Error("Empty result from AI service")
       }
     } catch (error) {
-      console.error("Translation Error:", error)
       toast({
         title: "Service Error",
         description: "Failed to connect to the translation engine.",
@@ -70,16 +88,9 @@ export default function TranslatorPage() {
     const file = e.target.files?.[0]
     if (file) {
       setFileName(file.name)
-      if (file.type === "text/plain") {
-        const reader = new FileReader()
-        reader.onload = (e) => setContent(e.target?.result as string)
-        reader.readAsText(file)
-      } else {
-        toast({
-          title: "File Registered",
-          description: `Uploaded ${file.name}. Please ensure you've pasted the content for analysis in this demo.`,
-        })
-      }
+      const reader = new FileReader()
+      reader.onload = (e) => setContent(e.target?.result as string)
+      reader.readAsText(file)
     }
   }
 
@@ -103,7 +114,6 @@ export default function TranslatorPage() {
         </header>
         <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            {/* Input Section */}
             <div className="lg:col-span-5 flex flex-col gap-6">
               <div className="space-y-4">
                 <h2 className="text-2xl font-black text-slate-800">Legal Input</h2>
@@ -148,7 +158,7 @@ export default function TranslatorPage() {
                       type="file" 
                       ref={fileInputRef} 
                       className="hidden" 
-                      accept=".pdf,.doc,.docx,.txt"
+                      accept=".txt"
                       onChange={handleFileUpload}
                     />
                     <div className="w-20 h-20 rounded-3xl bg-accent/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm">
@@ -156,13 +166,13 @@ export default function TranslatorPage() {
                     </div>
                     <h3 className="text-xl font-bold text-slate-800 mb-2">Import Document</h3>
                     <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-8">
-                      We support PDF, DOCX, and TXT files. For optimal results in this version, please paste text.
+                      For this version, please upload text files (.txt).
                     </p>
                     {fileName && (
                       <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-xl border border-slate-200 animate-in fade-in slide-in-from-bottom-2">
                         <FileText className="h-4 w-4 text-primary" />
                         <span className="text-xs font-bold truncate max-w-[150px]">{fileName}</span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={(e) => { e.stopPropagation(); setFileName(null); }}>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={(e) => { e.stopPropagation(); setFileName(null); setContent(""); }}>
                           <X className="h-3 w-3" />
                         </Button>
                       </div>
@@ -190,7 +200,6 @@ export default function TranslatorPage() {
               </Button>
             </div>
 
-            {/* Results Section */}
             <div className="lg:col-span-7">
               <div className="space-y-6 flex flex-col h-full">
                 <div className="flex items-center justify-between">
@@ -225,7 +234,6 @@ export default function TranslatorPage() {
 
                 {analysis && (
                   <div className="space-y-8 animate-in fade-in duration-700">
-                    {/* High Level Summary */}
                     <Card className="premium-gradient text-white border-none shadow-2xl overflow-hidden relative">
                       <div className="absolute -right-4 -bottom-4 opacity-10">
                         <Info className="h-32 w-32" />

@@ -1,27 +1,35 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { AlertCircle, FileSearch, Loader2, ShieldAlert, ShieldCheck, ShieldQuestion } from "lucide-react"
+import { AlertCircle, FileSearch, Loader2, ShieldAlert, ShieldCheck, ShieldQuestion, Upload, FileText, X } from "lucide-react"
 import { identifyContractRisks, IdentifyContractRisksOutput } from "@/ai/flows/identify-contract-risks-flow"
 import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useUser, useFirestore } from "@/firebase"
+import { collection, doc } from "firebase/firestore"
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
 export default function RisksPage() {
   const [content, setContent] = useState("")
   const [analysis, setAnalysis] = useState<IdentifyContractRisksOutput | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [fileName, setFileName] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
+  const { user } = useUser()
+  const db = useFirestore()
 
   const handleAnalyze = async () => {
     if (!content.trim()) {
       toast({
         title: "Empty Document",
-        description: "Please paste the contract text you want to analyze.",
+        description: "Please paste text or upload a contract for analysis.",
         variant: "destructive",
       })
       return
@@ -31,6 +39,22 @@ export default function RisksPage() {
     try {
       const result = await identifyContractRisks({ contractContent: content })
       setAnalysis(result)
+
+      // Save metadata to Firestore
+      if (user && db) {
+        const docRef = collection(db, "users", user.uid, "documents")
+        addDocumentNonBlocking(docRef, {
+          userId: user.uid,
+          filename: fileName || `RiskScan-${new Date().getTime()}.txt`,
+          storagePath: "in-memory",
+          mimeType: "text/plain",
+          uploadDate: new Date().toISOString(),
+          status: "processed",
+          description: result.summary,
+          content: content
+        })
+      }
+
     } catch (error) {
       toast({
         title: "Analysis Error",
@@ -39,6 +63,16 @@ export default function RisksPage() {
       })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setFileName(file.name)
+      const reader = new FileReader()
+      reader.onload = (e) => setContent(e.target?.result as string)
+      reader.readAsText(file)
     }
   }
 
@@ -60,19 +94,45 @@ export default function RisksPage() {
                   <CardTitle className="text-base flex items-center gap-2">
                     <FileSearch className="h-4 w-4" /> Contract Content
                   </CardTitle>
-                  <CardDescription>Paste the full text of your agreement here for a deep scan</CardDescription>
+                  <CardDescription>Upload or paste your agreement for a deep scan</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Textarea
-                    placeholder="E.g., NDA, Employment Contract, Vendor Agreement..."
-                    className="min-h-[400px] resize-none focus-visible:ring-accent"
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                  />
+                  <Tabs defaultValue="paste" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="paste">Paste</TabsTrigger>
+                      <TabsTrigger value="upload">Upload</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="paste" className="mt-4">
+                      <Textarea
+                        placeholder="Paste your contract text here..."
+                        className="min-h-[400px] resize-none focus-visible:ring-accent"
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                      />
+                    </TabsContent>
+                    <TabsContent value="upload" className="mt-4">
+                      <div 
+                        className="h-[400px] border-2 border-dashed rounded-md flex flex-col items-center justify-center p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <input type="file" ref={fileInputRef} className="hidden" accept=".txt" onChange={handleFileUpload} />
+                        <Upload className="h-10 w-10 text-muted-foreground mb-4" />
+                        <p className="text-sm font-medium">Click to upload .txt file</p>
+                        {fileName && (
+                          <div className="mt-4 p-2 bg-muted rounded-md flex items-center gap-2">
+                            <FileText className="h-4 w-4" />
+                            <span className="text-xs truncate max-w-[150px]">{fileName}</span>
+                            <X className="h-3 w-3 cursor-pointer" onClick={(e) => { e.stopPropagation(); setFileName(null); setContent(""); }} />
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                  
                   <Button 
                     onClick={handleAnalyze} 
                     disabled={isLoading} 
-                    className="w-full bg-accent hover:bg-accent/90"
+                    className="w-full bg-accent hover:bg-accent/90 h-12"
                   >
                     {isLoading ? (
                       <>
