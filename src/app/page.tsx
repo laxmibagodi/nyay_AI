@@ -2,77 +2,90 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { BookText, FileSearch, FilePlus2, MessageSquareQuote, ShieldAlert, ShieldCheck, ArrowRight, Files } from "lucide-react"
+import { BookText, FileSearch, FilePlus2, MessageSquareQuote, ShieldAlert, ShieldCheck, ArrowRight, Files, Activity, Zap } from "lucide-react"
 import Link from "next/link"
 
 export default function DashboardPage() {
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-slate-50/50">
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-background/50 backdrop-blur-md sticky top-0 z-10">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-6 bg-white/80 backdrop-blur-md sticky top-0 z-20 shadow-sm">
           <SidebarTrigger />
-          <div className="flex items-center gap-2 px-4">
-            <h1 className="text-lg font-semibold font-headline">Overview</h1>
+          <div className="flex items-center gap-2 px-2">
+            <h1 className="text-xl font-bold font-headline text-primary">Intelligence Center</h1>
           </div>
         </header>
-        <main className="flex-1 p-6 space-y-8 max-w-7xl mx-auto w-full">
-          {/* Hero Section */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <Card className="col-span-full md:col-span-2 bg-primary text-primary-foreground overflow-hidden relative">
-              <div className="absolute top-0 right-0 p-8 opacity-10">
-                <ShieldCheck className="h-48 w-48" />
+        <main className="flex-1 p-8 space-y-10 max-w-7xl mx-auto w-full">
+          {/* Hero Banner */}
+          <section className="relative rounded-3xl premium-gradient p-10 text-white overflow-hidden shadow-2xl">
+            <div className="relative z-10 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-bold mb-6 backdrop-blur-sm">
+                <Zap className="h-3 w-3 text-yellow-400" /> V2.0 LIVE: Advanced Risk Analysis
               </div>
-              <CardHeader className="relative z-10">
-                <CardTitle className="text-3xl font-headline">Welcome to Nyay AI</CardTitle>
-                <CardDescription className="text-primary-foreground/80 text-lg max-w-xl">
-                  Your AI-powered legal shield. We help small businesses navigate complex legalities with ease, precision, and speed.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="relative z-10 flex gap-4 mt-4">
-                <Button asChild variant="secondary" size="lg">
-                  <Link href="/generator">Generate Document</Link>
+              <h2 className="text-4xl font-headline font-black mb-4 leading-tight">
+                Fortify Your Business Legal Infrastructure.
+              </h2>
+              <p className="text-lg text-white/80 mb-8 font-medium">
+                Harness GenAI to translate jargon, identify contract pitfalls, and draft ironclad agreements in seconds.
+              </p>
+              <div className="flex gap-4">
+                <Button asChild size="lg" className="bg-white text-primary hover:bg-slate-100 rounded-xl px-8 shadow-lg transition-all hover:scale-105">
+                  <Link href="/generator">Draft Document</Link>
                 </Button>
-                <Button asChild variant="outline" size="lg" className="bg-transparent border-primary-foreground/30 hover:bg-primary-foreground/10 text-primary-foreground">
-                  <Link href="/risks">Analyze Risks</Link>
+                <Button asChild size="lg" variant="outline" className="bg-white/5 border-white/20 text-white hover:bg-white/10 rounded-xl px-8 backdrop-blur-md">
+                  <Link href="/assistant">Talk to Assistant</Link>
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+            <div className="absolute top-0 right-0 p-10 opacity-10 pointer-events-none">
+              <ShieldCheck className="h-64 w-64 rotate-12" />
+            </div>
+          </section>
 
-            <Card className="flex flex-col justify-between border-l-4 border-l-accent shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground uppercase tracking-widest">
-                  <ShieldAlert className="h-4 w-4" /> Compliance Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold font-headline">High Risk</div>
-                <p className="text-sm text-muted-foreground mt-1">2 vendor agreements need immediate review</p>
-                <Button variant="link" className="px-0 mt-4 text-accent hover:text-accent/80" asChild>
-                  <Link href="/risks" className="flex items-center gap-1">Fix Now <ArrowRight className="h-4 w-4" /></Link>
-                </Button>
-              </CardContent>
-            </Card>
+          {/* Key Metrics */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              { label: "Active Documents", value: "24", sub: "+3 this week", icon: Files, color: "text-blue-600" },
+              { label: "Compliance Score", value: "92%", sub: "High Stability", icon: ShieldCheck, color: "text-emerald-600" },
+              { label: "Unresolved Risks", value: "02", sub: "Needs Review", icon: ShieldAlert, color: "text-orange-600" },
+              { label: "AI Interactions", value: "158", sub: "Monthly Usage", icon: Activity, color: "text-purple-600" },
+            ].map((stat, i) => (
+              <Card key={i} className="border-none shadow-sm hover:shadow-md transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                  <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{stat.label}</CardTitle>
+                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-black">{stat.value}</div>
+                  <p className="text-[10px] text-muted-foreground mt-1 font-medium">{stat.sub}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
-          {/* Quick Actions */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-headline font-semibold">Core Capability Pillars</h2>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* Pillars of Power */}
+          <section className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-2xl font-headline font-bold text-slate-800">Operational Pillars</h3>
+              <p className="text-sm text-muted-foreground">Select a module to begin</p>
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {[
-                { title: "Translator", desc: "Complex jargon to plain English", icon: BookText, href: "/translator", color: "bg-blue-50 text-blue-600" },
-                { title: "Risk ID", desc: "Scan contracts for pitfalls", icon: FileSearch, href: "/risks", color: "bg-purple-50 text-purple-600" },
-                { title: "Generator", desc: "Auto-draft NDAs & Contracts", icon: FilePlus2, href: "/generator", color: "bg-emerald-50 text-emerald-600" },
-                { title: "Assistant", desc: "Step-by-step guidance", icon: MessageSquareQuote, href: "/assistant", color: "bg-orange-50 text-orange-600" },
-              ].map((action) => (
-                <Link key={action.title} href={action.href}>
-                  <Card className="group hover:border-accent hover:shadow-md transition-all h-full">
-                    <CardHeader className="space-y-1">
-                      <div className={`w-10 h-10 rounded-lg ${action.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
-                        <action.icon className="h-5 w-5" />
+                { title: "Jargon Translator", desc: "Convert archaic legal speak into actionable English.", icon: BookText, href: "/translator", theme: "from-blue-500 to-indigo-600" },
+                { title: "Risk Analytics", desc: "Automated vulnerability scanning for your contracts.", icon: FileSearch, href: "/risks", theme: "from-violet-500 to-purple-600" },
+                { title: "Smart Generator", desc: "Context-aware drafting for high-speed business.", icon: FilePlus2, href: "/generator", theme: "from-emerald-500 to-teal-600" },
+                { title: "Legal Assistant", desc: "Strategic what-if guidance for business dilemmas.", icon: MessageSquareQuote, href: "/assistant", theme: "from-orange-500 to-rose-600" },
+              ].map((pill) => (
+                <Link key={pill.title} href={pill.href} className="group">
+                  <Card className="h-full border-none shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden relative">
+                    <div className={`h-1.5 w-full bg-gradient-to-r ${pill.theme}`} />
+                    <CardHeader>
+                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${pill.theme} flex items-center justify-center mb-4 text-white shadow-lg group-hover:scale-110 transition-transform`}>
+                        <pill.icon className="h-6 w-6" />
                       </div>
-                      <CardTitle className="text-lg">{action.title}</CardTitle>
-                      <CardDescription>{action.desc}</CardDescription>
+                      <CardTitle className="text-xl group-hover:text-accent transition-colors">{pill.title}</CardTitle>
+                      <CardDescription className="leading-relaxed text-sm">{pill.desc}</CardDescription>
                     </CardHeader>
                   </Card>
                 </Link>
@@ -80,34 +93,44 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* Recent Activity Mockup */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-headline font-semibold">Recent Documents</h2>
-            <div className="border rounded-xl bg-card overflow-hidden">
-              <div className="divide-y">
+          {/* Recent Vault Activity */}
+          <section className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-2xl font-headline font-bold text-slate-800">Recent Vault Activity</h3>
+              <Button variant="ghost" className="text-accent font-bold" asChild>
+                <Link href="/documents">View All Vault <ArrowRight className="h-4 w-4 ml-2" /></Link>
+              </Button>
+            </div>
+            <Card className="border-none shadow-sm overflow-hidden">
+              <div className="divide-y divide-slate-100">
                 {[
-                  { name: "Vendor Service Level Agreement.pdf", type: "Risk Analysis", date: "2 hours ago", status: "Completed" },
-                  { name: "Standard NDA - Tech Project.docx", type: "Generated", date: "Yesterday", status: "Draft" },
-                  { name: "Commercial Lease Terms.pdf", type: "Translation", date: "3 days ago", status: "Completed" },
-                ].map((doc, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <Files className="h-8 w-8 text-muted-foreground/40" />
+                  { name: "Vendor Master Agreement - Q1", type: "Risk Analysis", date: "45 mins ago", status: "Analyzed" },
+                  { name: "Confidentiality Deed - Project X", type: "Generator", date: "Yesterday", status: "Draft" },
+                  { name: "Website Terms & Conditions", type: "Translation", date: "3 days ago", status: "Secured" },
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-6 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                        <Files className="h-5 w-5 text-slate-500" />
+                      </div>
                       <div>
-                        <p className="font-medium text-sm">{doc.name}</p>
-                        <p className="text-xs text-muted-foreground">{doc.type} • {doc.date}</p>
+                        <p className="font-bold text-slate-800">{item.name}</p>
+                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{item.type} • {item.date}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${doc.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                        {doc.status}
+                    <div className="flex items-center gap-6">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                        item.status === 'Analyzed' ? 'bg-orange-100 text-orange-700' : 
+                        item.status === 'Secured' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {item.status}
                       </span>
-                      <Button variant="ghost" size="sm">View</Button>
+                      <Button variant="outline" size="sm" className="rounded-lg font-bold">Details</Button>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
           </section>
         </main>
       </SidebarInset>
