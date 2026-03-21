@@ -18,8 +18,7 @@ import {
   FileText, 
   X,
   Sparkles,
-  ChevronRight,
-  History
+  ChevronRight
 } from "lucide-react"
 import { identifyContractRisks, IdentifyContractRisksOutput } from "@/ai/flows/identify-contract-risks-flow"
 import { useToast } from "@/hooks/use-toast"
@@ -28,11 +27,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useUser, useFirestore } from "@/firebase"
 import { collection } from "firebase/firestore"
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates"
+import { extractTextFromFile } from "@/lib/file-extractor"
 
 export default function RisksPage() {
   const [content, setContent] = useState("")
   const [analysis, setAnalysis] = useState<IdentifyContractRisksOutput | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isExtracting, setIsExtracting] = useState(false)
   const [fileName, setFileName] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
@@ -85,17 +86,21 @@ export default function RisksPage() {
     }
   }
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
-        toast({ title: "File too large", description: "Please upload a file smaller than 2MB.", variant: "destructive" })
-        return
-      }
+      setIsExtracting(true)
       setFileName(file.name)
-      const reader = new FileReader()
-      reader.onload = (e) => setContent(e.target?.result as string)
-      reader.readAsText(file)
+      try {
+        const text = await extractTextFromFile(file)
+        setContent(text)
+        toast({ title: "File Loaded", description: `Successfully extracted text from ${file.name}` })
+      } catch (error: any) {
+        setFileName(null)
+        toast({ title: "Extraction Failed", description: error.message || "Could not read file.", variant: "destructive" })
+      } finally {
+        setIsExtracting(false)
+      }
     }
   }
 
@@ -116,7 +121,7 @@ export default function RisksPage() {
               <div className="space-y-4">
                 <h2 className="text-2xl font-black text-slate-800">Security Audit</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Detect hidden liabilities, unfavorable terms, and missing clauses. Every scan is securely logged to your personal vault.
+                  Detect hidden liabilities, unfavorable terms, and missing clauses. Supports PDF, DOCX, and TXT files.
                 </p>
               </div>
 
@@ -142,14 +147,14 @@ export default function RisksPage() {
                           type="file" 
                           ref={fileInputRef} 
                           className="hidden" 
-                          accept=".txt" 
+                          accept=".pdf,.docx,.txt" 
                           onChange={handleFileUpload} 
                         />
                         <div className="w-16 h-16 rounded-2xl bg-accent/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                          <Upload className="h-8 w-8 text-accent" />
+                          {isExtracting ? <Loader2 className="h-8 w-8 text-accent animate-spin" /> : <Upload className="h-8 w-8 text-accent" />}
                         </div>
-                        <h4 className="font-bold text-slate-800">Drop legal file here</h4>
-                        <p className="text-xs text-muted-foreground mt-1">Supports plain text (.txt) up to 2MB</p>
+                        <h4 className="font-bold text-slate-800">{isExtracting ? "Extracting..." : "Drop legal file here"}</h4>
+                        <p className="text-xs text-muted-foreground mt-1">Supports PDF, DOCX, and TXT</p>
                         
                         {fileName && (
                           <div className="mt-6 flex items-center gap-2 px-3 py-1.5 bg-accent/10 rounded-lg animate-in fade-in slide-in-from-bottom-2">
@@ -175,7 +180,7 @@ export default function RisksPage() {
               
               <Button 
                 onClick={handleAnalyze} 
-                disabled={isLoading} 
+                disabled={isLoading || isExtracting} 
                 className="w-full h-14 text-lg font-bold shadow-2xl accent-gradient hover:opacity-90 rounded-2xl transition-all active:scale-[0.98]"
               >
                 {isLoading ? (

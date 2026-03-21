@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useRef } from "react"
@@ -22,13 +23,15 @@ import { translateLegalJargon, TranslateLegalJargonOutput } from "@/ai/flows/tra
 import { useToast } from "@/hooks/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useUser, useFirestore } from "@/firebase"
-import { collection, doc } from "firebase/firestore"
+import { collection } from "firebase/firestore"
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates"
+import { extractTextFromFile } from "@/lib/file-extractor"
 
 export default function TranslatorPage() {
   const [content, setContent] = useState("")
   const [analysis, setAnalysis] = useState<TranslateLegalJargonOutput | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isExtracting, setIsExtracting] = useState(false)
   const [fileName, setFileName] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
@@ -58,8 +61,8 @@ export default function TranslatorPage() {
           const docRef = collection(db, "users", user.uid, "documents")
           addDocumentNonBlocking(docRef, {
             userId: user.uid,
-            filename: fileName || `Translation-${new Date().getTime()}.txt`,
-            storagePath: "in-memory",
+            filename: fileName || `Translation-${new Date().getTime().toString().slice(-6)}.txt`,
+            storagePath: "vault-storage",
             mimeType: "text/plain",
             uploadDate: new Date().toISOString(),
             status: "processed",
@@ -70,7 +73,7 @@ export default function TranslatorPage() {
 
         toast({
           title: "Translation Complete",
-          description: "Legal jargon has been simplified.",
+          description: "Legal jargon has been simplified and saved to your vault.",
         })
       }
     } catch (error) {
@@ -84,13 +87,21 @@ export default function TranslatorPage() {
     }
   }
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      setIsExtracting(true)
       setFileName(file.name)
-      const reader = new FileReader()
-      reader.onload = (e) => setContent(e.target?.result as string)
-      reader.readAsText(file)
+      try {
+        const text = await extractTextFromFile(file)
+        setContent(text)
+        toast({ title: "File Loaded", description: `Successfully extracted text from ${file.name}` })
+      } catch (error: any) {
+        setFileName(null)
+        toast({ title: "Extraction Failed", description: error.message || "Could not read file.", variant: "destructive" })
+      } finally {
+        setIsExtracting(false)
+      }
     }
   }
 
@@ -118,7 +129,7 @@ export default function TranslatorPage() {
               <div className="space-y-4">
                 <h2 className="text-2xl font-black text-slate-800">Legal Input</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Paste complex clauses or entire agreements. Our AI will break them down into human-readable English.
+                  Paste complex clauses or upload PDF, DOCX, and TXT files. Our AI will break them down into human-readable English.
                 </p>
               </div>
 
@@ -158,15 +169,15 @@ export default function TranslatorPage() {
                       type="file" 
                       ref={fileInputRef} 
                       className="hidden" 
-                      accept=".txt"
+                      accept=".pdf,.docx,.txt"
                       onChange={handleFileUpload}
                     />
                     <div className="w-20 h-20 rounded-3xl bg-accent/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm">
-                      <Upload className="h-10 w-10 text-accent" />
+                      {isExtracting ? <Loader2 className="h-10 w-10 text-accent animate-spin" /> : <Upload className="h-10 w-10 text-accent" />}
                     </div>
-                    <h3 className="text-xl font-bold text-slate-800 mb-2">Import Document</h3>
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">{isExtracting ? "Extracting Text..." : "Import Document"}</h3>
                     <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-8">
-                      For this version, please upload text files (.txt).
+                      Supports PDF, DOCX, and TXT files.
                     </p>
                     {fileName && (
                       <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-xl border border-slate-200 animate-in fade-in slide-in-from-bottom-2">
@@ -183,7 +194,7 @@ export default function TranslatorPage() {
 
               <Button 
                 onClick={handleTranslate} 
-                disabled={isLoading} 
+                disabled={isLoading || isExtracting} 
                 className="w-full h-14 text-lg font-bold shadow-2xl accent-gradient hover:opacity-90 rounded-2xl transition-all active:scale-[0.98]"
               >
                 {isLoading ? (
