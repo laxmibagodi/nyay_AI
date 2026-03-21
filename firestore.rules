@@ -1,0 +1,167 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * NYAY AI SECURITY RULES
+     * 
+     * CORE PHILOSOPHY:
+     * This ruleset implements a strict User-Ownership model. All data is logically and 
+     * physically siloed within a user's unique path prefix (/users/{userId}/...). 
+     * This provides "Authorization Independence" where the security of any document 
+     * is determined solely by its location in the database hierarchy.
+     * 
+     * DATA STRUCTURE:
+     * The hierarchy follows a root /users/{userId} pattern. All related entities 
+     * (Documents, Risk Scans, Translations, Chat Sessions) are stored as sub-collections 
+     * of the UserProfile, ensuring that a user's data is never mixed with another's.
+     * 
+     * KEY SECURITY DECISIONS:
+     * 1. Path-Based Authorization: The {userId} wildcard in the path is compared 
+     *    directly against the 'request.auth.uid' to grant access.
+     * 2. Relational Integrity: On creation of user-scoped documents, the rules enforce 
+     *    that internal 'userId' fields match the path ID to prevent cross-user data injection.
+     * 3. Immutability: Critical ownership fields (like userId) are marked immutable 
+     *    during updates to prevent data from being "stolen" or reassigned.
+     * 4. Denormalization for Performance: We assume user-specific metadata is 
+     *    stored within documents to avoid costly get() calls across collections.
+     * 5. No Public Access: All read and write operations require authentication.
+     */
+
+    // --- HELPER FUNCTIONS ---
+
+    /**
+     * @description Checks if the request is from a signed-in user.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user matches the provided userId.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Combines ownership check with document existence for updates and deletes.
+     */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    /**
+     * @description Validates that the userId field in the data matches the path userId.
+     */
+    function isValidOwnership(userId) {
+      return request.resource.data.userId == userId;
+    }
+
+    /**
+     * @description Ensures the userId field cannot be changed during an update.
+     */
+    function isUserIdImmutable() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Rules for the root UserProfile document.
+     * @path /users/{userId}
+     * @allow (get) Signed-in user requests their own profile.
+     * @deny (list) Requests to list all user profiles in the system.
+     * @principle Path-based authorization and self-creation enforcement.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Rules for legal documents uploaded by the user.
+       * @path /users/{userId}/documents/{documentId}
+       * @allow (create) User uploads a new PDF and sets their own UID as the owner.
+       * @deny (create) User attempts to upload a document with someone else's UID.
+       * @principle Enforces relational integrity between path and document data.
+       */
+      match /documents/{documentId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidOwnership(userId);
+        allow update: if isExistingOwner(userId) && isUserIdImmutable();
+        allow delete: if isExistingOwner(userId);
+
+        /**
+         * @description Stores results of AI risk scans performed on a document.
+         * @path /users/{userId}/documents/{documentId}/riskScanResults/{riskScanResultId}
+         * @allow (list) User views all historical scans for a specific document.
+         * @deny (update) Any modification after the scan is generated (read-only for security).
+         * @principle Inherited ownership through the path hierarchy.
+         */
+        match /riskScanResults/{riskScanResultId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId);
+          allow update, delete: if false;
+        }
+
+        /**
+         * @description Stores results of legal jargon translations.
+         * @path /users/{userId}/documents/{documentId}/jargonTranslations/{jargonTranslationId}
+         * @allow (get) User views the plain-language summary of their document.
+         * @deny (create) Unauthenticated user attempts to create a translation result.
+         * @principle Strict path-based access control.
+         */
+        match /jargonTranslations/{jargonTranslationId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId);
+          allow update, delete: if false;
+        }
+      }
+
+      /**
+       * @description Stores legal documents auto-generated by AI prompts.
+       * @path /users/{userId}/generatedDocuments/{generatedDocumentId}
+       * @allow (list) User browses their generated NDAs or Vendor Agreements.
+       * @deny (delete) Another authenticated user attempts to delete the document.
+       * @principle Authorization independence via path nesting.
+       */
+      match /generatedDocuments/{generatedDocumentId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidOwnership(userId);
+        allow update: if isExistingOwner(userId) && isUserIdImmutable();
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Tracks conversational sessions with the AI assistant.
+       * @path /users/{userId}/chatSessions/{chatSessionId}
+       * @allow (update) User updates the title of a specific chat session.
+       * @deny (get) User attempts to access a chat session belonging to another UID.
+       * @principle Path-based resource scoping.
+       */
+      match /chatSessions/{chatSessionId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidOwnership(userId);
+        allow update: if isExistingOwner(userId) && isUserIdImmutable();
+        allow delete: if isExistingOwner(userId);
+
+        /**
+         * @description Individual messages within a chat session.
+         * @path /users/{userId}/chatSessions/{chatSessionId}/messages/{messageId}
+         * @allow (create) User sends a message referencing a previously uploaded document.
+         * @deny (update) User attempts to edit a message (immutable history policy).
+         * @principle Deeply nested hierarchy for automatic permission inheritance.
+         */
+        match /messages/{messageId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId) && isValidOwnership(userId);
+          allow update: if false;
+          allow delete: if isExistingOwner(userId);
+        }
+      }
+    }
+  }
+}

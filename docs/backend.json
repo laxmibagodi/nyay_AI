@@ -1,0 +1,479 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user's profile within the Nyay AI application, linking all user-specific data.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address, used for display and communication, not for authentication.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the user."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "createdAt"
+      ]
+    },
+    "Document": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Document",
+      "type": "object",
+      "description": "Represents an uploaded legal document managed within the Nyay AI application, used for features like Jargon Translator and Risk Identifier.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Document entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who uploaded this document. (Relationship: UserProfile 1:N Document)"
+        },
+        "filename": {
+          "type": "string",
+          "description": "The original name of the file when it was uploaded by the user."
+        },
+        "storagePath": {
+          "type": "string",
+          "description": "The URI or path where the document is securely stored.",
+          "format": "uri"
+        },
+        "mimeType": {
+          "type": "string",
+          "description": "The MIME type of the uploaded document (e.g., 'application/pdf', 'text/plain')."
+        },
+        "uploadDate": {
+          "type": "string",
+          "description": "Timestamp indicating when the document was uploaded.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current processing status of the document (e.g., 'uploaded', 'processing', 'processed', 'failed')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description or AI-generated summary of the document's content."
+        },
+        "lastAccessedDate": {
+          "type": "string",
+          "description": "Timestamp indicating the last time this document was viewed or utilized in any feature.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "filename",
+        "storagePath",
+        "mimeType",
+        "uploadDate",
+        "status"
+      ]
+    },
+    "RiskScanResult": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RiskScanResult",
+      "type": "object",
+      "description": "Stores the results of an AI-powered risk analysis performed on an uploaded legal document.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the RiskScanResult entity."
+        },
+        "documentId": {
+          "type": "string",
+          "description": "Reference to the Document that was scanned for risks. (Relationship: Document 1:N RiskScanResult)"
+        },
+        "scanDate": {
+          "type": "string",
+          "description": "Timestamp indicating when the risk scan was performed.",
+          "format": "date-time"
+        },
+        "overallRiskScore": {
+          "type": "number",
+          "description": "A numerical score representing the overall risk level detected in the document."
+        },
+        "summary": {
+          "type": "string",
+          "description": "An AI-generated summary of the key risks identified in the document."
+        },
+        "riskyClausesDetails": {
+          "type": "array",
+          "description": "A list of identified risky clauses or issues, each described in plain language.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the risk scan (e.g., 'completed', 'pending', 'failed')."
+        },
+        "mitigationSuggestions": {
+          "type": "string",
+          "description": "AI-generated suggestions or steps to mitigate the identified risks."
+        }
+      },
+      "required": [
+        "id",
+        "documentId",
+        "scanDate",
+        "overallRiskScore",
+        "summary",
+        "status"
+      ]
+    },
+    "JargonTranslation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "JargonTranslation",
+      "type": "object",
+      "description": "Stores the results of AI-powered legal jargon translation for an uploaded document.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the JargonTranslation entity."
+        },
+        "documentId": {
+          "type": "string",
+          "description": "Reference to the Document for which jargon was translated. (Relationship: Document 1:N JargonTranslation)"
+        },
+        "translationDate": {
+          "type": "string",
+          "description": "Timestamp indicating when the translation was performed.",
+          "format": "date-time"
+        },
+        "translationSummary": {
+          "type": "string",
+          "description": "An AI-generated summary of the document's content in plain language."
+        },
+        "keyTranslatedTerms": {
+          "type": "array",
+          "description": "A list of key legal terms from the document and their plain language translations.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the translation process (e.g., 'completed', 'pending', 'failed')."
+        }
+      },
+      "required": [
+        "id",
+        "documentId",
+        "translationDate",
+        "translationSummary",
+        "status"
+      ]
+    },
+    "GeneratedDocument": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GeneratedDocument",
+      "type": "object",
+      "description": "Represents a legal document that was auto-generated by the Nyay AI application based on user input.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the GeneratedDocument entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who initiated the generation of this document. (Relationship: UserProfile 1:N GeneratedDocument)"
+        },
+        "filename": {
+          "type": "string",
+          "description": "The name assigned to the generated document."
+        },
+        "generationDate": {
+          "type": "string",
+          "description": "Timestamp indicating when the document was generated.",
+          "format": "date-time"
+        },
+        "documentType": {
+          "type": "string",
+          "description": "The type of legal document generated (e.g., 'NDA', 'Vendor Agreement', 'Custom Contract')."
+        },
+        "inputParameters": {
+          "type": "string",
+          "description": "A serialized representation (e.g., JSON string) of the specific inputs and parameters used to generate the document."
+        },
+        "storagePath": {
+          "type": "string",
+          "description": "The URI or path where the generated document is securely stored.",
+          "format": "uri"
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the document generation (e.g., 'generated', 'draft', 'failed')."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "filename",
+        "generationDate",
+        "documentType",
+        "storagePath",
+        "status"
+      ]
+    },
+    "ChatSession": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChatSession",
+      "type": "object",
+      "description": "Represents a conversational session with the AI Legal Assistant.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ChatSession entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who initiated and owns this chat session. (Relationship: UserProfile 1:N ChatSession)"
+        },
+        "startDate": {
+          "type": "string",
+          "description": "Timestamp indicating when the chat session began.",
+          "format": "date-time"
+        },
+        "lastActivityDate": {
+          "type": "string",
+          "description": "Timestamp indicating the last time a message was sent or received in this session.",
+          "format": "date-time"
+        },
+        "title": {
+          "type": "string",
+          "description": "A short, descriptive title for the chat session, possibly AI-generated or user-provided."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "startDate",
+        "lastActivityDate",
+        "title"
+      ]
+    },
+    "ChatMessage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChatMessage",
+      "type": "object",
+      "description": "Represents an individual message within a ChatSession, sent by either the user or the AI assistant.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ChatMessage entity."
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Reference to the ChatSession this message belongs to. (Relationship: ChatSession 1:N ChatMessage)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile associated with this message, even if sent by AI (context of user's session). (Relationship: UserProfile 1:N ChatMessage)"
+        },
+        "messageContent": {
+          "type": "string",
+          "description": "The textual content of the message."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp indicating when the message was sent or received.",
+          "format": "date-time"
+        },
+        "senderType": {
+          "type": "string",
+          "description": "Indicates who sent the message: 'user' or 'ai'."
+        },
+        "referencedDocumentId": {
+          "type": "string",
+          "description": "Optional reference to a Document entity if the message refers to or contextualizes an uploaded document. (Relationship: Document 1:N ChatMessage)",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "id",
+        "sessionId",
+        "userId",
+        "messageContent",
+        "timestamp",
+        "senderType"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores individual user profiles. The document ID (`{userId}`) will be the Firebase Authentication UID, making it the root for all user-specific data and providing direct path-based authorization."
+        }
+      },
+      {
+        "path": "/users/{userId}/documents/{documentId}",
+        "definition": {
+          "entityName": "Document",
+          "schema": {
+            "$ref": "#/backend/entities/Document"
+          },
+          "description": "Stores legal documents uploaded by a specific user. The `Document.userId` field will align with the `{userId}` in the path for authorization independence. Supports listing a user's recently uploaded documents.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the document."
+            },
+            {
+              "name": "documentId",
+              "description": "The unique identifier of the uploaded document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/documents/{documentId}/riskScanResults/{riskScanResultId}",
+        "definition": {
+          "entityName": "RiskScanResult",
+          "schema": {
+            "$ref": "#/backend/entities/RiskScanResult"
+          },
+          "description": "Stores the results of AI-powered risk analysis for a specific uploaded document. Access is implicitly controlled by the parent `Document` and `UserProfile` ownership, ensuring authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the document being scanned."
+            },
+            {
+              "name": "documentId",
+              "description": "The unique identifier of the parent document."
+            },
+            {
+              "name": "riskScanResultId",
+              "description": "The unique identifier for a specific risk scan result."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/documents/{documentId}/jargonTranslations/{jargonTranslationId}",
+        "definition": {
+          "entityName": "JargonTranslation",
+          "schema": {
+            "$ref": "#/backend/entities/JargonTranslation"
+          },
+          "description": "Stores the results of AI-powered legal jargon translation for a specific uploaded document. Access is implicitly controlled by the parent `Document` and `UserProfile` ownership, ensuring authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the document being translated."
+            },
+            {
+              "name": "documentId",
+              "description": "The unique identifier of the parent document."
+            },
+            {
+              "name": "jargonTranslationId",
+              "description": "The unique identifier for a specific jargon translation result."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/generatedDocuments/{generatedDocumentId}",
+        "definition": {
+          "entityName": "GeneratedDocument",
+          "schema": {
+            "$ref": "#/backend/entities/GeneratedDocument"
+          },
+          "description": "Stores legal documents generated by the AI for a specific user. The `GeneratedDocument.userId` field will align with the `{userId}` in the path for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who initiated the document generation."
+            },
+            {
+              "name": "generatedDocumentId",
+              "description": "The unique identifier of the generated document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/chatSessions/{chatSessionId}",
+        "definition": {
+          "entityName": "ChatSession",
+          "schema": {
+            "$ref": "#/backend/entities/ChatSession"
+          },
+          "description": "Stores individual chat sessions for a specific user. The `ChatSession.userId` field will align with the `{userId}` in the path for authorization independence. Supports listing a user's chat sessions.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the chat session."
+            },
+            {
+              "name": "chatSessionId",
+              "description": "The unique identifier of the chat session."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/chatSessions/{chatSessionId}/messages/{messageId}",
+        "definition": {
+          "entityName": "ChatMessage",
+          "schema": {
+            "$ref": "#/backend/entities/ChatMessage"
+          },
+          "description": "Stores individual messages within a specific chat session belonging to a user. Access is implicitly controlled by the parent `ChatSession` and `UserProfile` ownership, ensuring authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the chat session."
+            },
+            {
+              "name": "chatSessionId",
+              "description": "The unique identifier of the parent chat session."
+            },
+            {
+              "name": "messageId",
+              "description": "The unique identifier for a specific chat message."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The recommended Firestore structure leverages a strictly hierarchical, user-centric model, ensuring robust security, scalability, and debuggability. All user-specific data is nested under a top-level `/users/{userId}` collection, where the document ID for each user profile (`UserProfile`) is the Firebase Authentication `uid`. This pattern fundamentally achieves **Authorization Independence** as every document's ownership can be determined directly from its path, eliminating the need for `get()` calls within security rules. For example, to authorize access to any document under `/users/{userId}/...`, the rule simply checks `request.auth.uid == userId`. This also supports atomic operations for creating related entities.\n\n**Structural Segregation** is maintained by ensuring that all data within a given user's path shares the same security posture (private to that user). There's no mixing of public and private data. For example, `Document` entities, `GeneratedDocument` entities, and `ChatSession` entities, along with their respective subcollections, are all strictly owned by and accessible only to the user specified in the `{userId}` wildcard.\n\n**QAPs (Queries as Permissions)** are fully supported. Because `list` operations are constrained by the `{userId}` in the path (e.g., `db.collection('users').doc(request.auth.uid).collection('documents')`), all documents returned by a query will inherently belong to the authenticated user. This means security rules do not act as filters on results, but rather as strict gatekeepers on query execution. For instance, a query for a user's recent documents (`/users/{userId}/documents`) will only return documents where the `userId` in the path matches `request.auth.uid`, making the query inherently secure and performant. The same applies to listing risk scan results, jargon translations, chat sessions, and messages, all of which are nested under the authenticated user's path."
+  }
+}
