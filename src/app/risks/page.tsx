@@ -15,7 +15,8 @@ import {
   Camera,
   X,
   Sparkles,
-  Zap
+  Zap,
+  CameraOff
 } from "lucide-react"
 import { identifyContractRisks, IdentifyContractRisksOutput } from "@/ai/flows/identify-contract-risks-flow"
 import { useToast } from "@/hooks/use-toast"
@@ -61,6 +62,15 @@ export default function RisksPage() {
     }
   }
 
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream
+      stream.getTracks().forEach(track => track.stop())
+      videoRef.current.srcObject = null
+    }
+    setIsCameraActive(false)
+  }
+
   const capturePhoto = async () => {
     if (videoRef.current && canvasRef.current) {
       const context = canvasRef.current.getContext('2d')
@@ -68,9 +78,7 @@ export default function RisksPage() {
       canvasRef.current.height = videoRef.current.videoHeight
       context?.drawImage(videoRef.current, 0, 0)
       
-      const stream = videoRef.current.srcObject as MediaStream
-      stream.getTracks().forEach(track => track.stop())
-      setIsCameraActive(false)
+      stopCamera()
 
       setIsExtracting(true)
       const dataUrl = canvasRef.current.toDataURL('image/png')
@@ -141,14 +149,14 @@ export default function RisksPage() {
           <h1 className="text-xl font-black text-primary">Risk Identifier</h1>
         </header>
         
-        <main className="flex-1 p-4 md:p-8 max-w-4xl mx-auto w-full space-y-8">
+        <main className="flex-1 p-4 md:p-8 max-w-4xl mx-auto w-full space-y-8 pb-24">
           
           <div className="space-y-2">
             <h2 className="text-2xl font-black text-slate-800">Security Audit</h2>
             <p className="text-sm text-slate-500 font-medium">Detect hidden 'traps' in digital or paper contracts.</p>
           </div>
 
-          <Card className="shadow-xl border-none ring-1 ring-slate-100 overflow-hidden rounded-3xl">
+          <Card className="shadow-xl border-none ring-1 ring-slate-100 overflow-hidden rounded-3xl bg-white">
             <Tabs defaultValue="upload" className="w-full">
               <TabsList className="grid w-full grid-cols-3 p-1 bg-slate-100 border-b rounded-none">
                 <TabsTrigger value="upload" className="font-black text-[10px] uppercase tracking-widest py-3">File</TabsTrigger>
@@ -158,7 +166,7 @@ export default function RisksPage() {
               
               <TabsContent value="upload" className="p-8 m-0 min-h-[300px] flex items-center justify-center">
                 <div 
-                  className="w-full h-full border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center p-12 text-center cursor-pointer hover:bg-slate-50 group"
+                  className="w-full h-full border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center p-12 text-center cursor-pointer hover:bg-slate-50 group transition-all"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.docx,.txt" onChange={async (e) => {
@@ -185,17 +193,37 @@ export default function RisksPage() {
                 />
               </TabsContent>
 
-              <TabsContent value="camera" className="p-0 m-0 min-h-[300px] relative bg-black flex items-center justify-center overflow-hidden">
+              <TabsContent value="camera" className="p-0 m-0 min-h-[400px] relative bg-black flex items-center justify-center overflow-hidden">
                 <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
                 <canvas ref={canvasRef} className="hidden" />
+                
                 {isCameraActive && (
-                  <Button onClick={capturePhoto} className="absolute bottom-6 h-16 w-16 rounded-full bg-white text-black shadow-2xl active:scale-95">
-                    <Camera className="h-8 w-8" />
-                  </Button>
+                  <div className="absolute bottom-6 flex items-center gap-6">
+                    <Button onClick={capturePhoto} className="h-16 w-16 rounded-full bg-white text-black shadow-2xl active:scale-95 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full border-2 border-black/20" />
+                    </Button>
+                    <Button 
+                      variant="secondary" 
+                      onClick={stopCamera} 
+                      className="h-12 w-12 rounded-full bg-red-500 text-white shadow-xl flex items-center justify-center p-0"
+                    >
+                      <CameraOff className="h-5 w-5" />
+                    </Button>
+                  </div>
                 )}
-                <Button variant="ghost" onClick={() => setIsCameraActive(false)} className="absolute top-4 right-4 text-white">
+                
+                <Button variant="ghost" onClick={stopCamera} className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full">
                   <X className="h-6 w-6" />
                 </Button>
+
+                {!isCameraActive && !isExtracting && (
+                  <div className="text-white text-center p-8">
+                    <Camera className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="font-black uppercase tracking-widest text-xs">Camera is Off</p>
+                    <Button variant="outline" size="sm" onClick={startCamera} className="mt-4 border-white/20 text-white bg-white/10 hover:bg-white/20">Restart Camera</Button>
+                  </div>
+                )}
+
                 {isExtracting && (
                   <div className="absolute inset-0 bg-black/50 backdrop-blur-md flex flex-col items-center justify-center text-white">
                     <Loader2 className="h-10 w-10 animate-spin mb-4" />

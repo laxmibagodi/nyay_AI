@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useUser } from '@/firebase';
 import { Loader2 } from 'lucide-react';
 
-const publicRoutes = ['/sign-in', '/sign-up', '/verify', '/pricing', '/onboarding'];
+const publicRoutes = ['/sign-in', '/sign-up', '/verify', '/pricing', '/onboarding', '/welcome'];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
@@ -15,7 +15,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isUserLoading && !user && !publicRoutes.includes(pathname)) {
-      router.push('/sign-in');
+      router.push('/welcome');
     }
   }, [user, isUserLoading, pathname, router]);
 
