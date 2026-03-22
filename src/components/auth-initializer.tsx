@@ -1,35 +1,23 @@
 
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { useAuth, useUser } from '@/firebase';
-import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
+import { useEffect } from 'react';
+import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 
 /**
- * AuthInitializer component ensures that every visitor has a Firebase identity.
- * It initiates an anonymous sign-in if the user is not already authenticated.
+ * AuthInitializer component now primarily handles error reporting for the auth state.
+ * Automatic anonymous sign-in has been disabled to support mandatory Real Auth (Email/Phone).
  */
 export function AuthInitializer() {
-  const auth = useAuth();
-  const { user, isUserLoading, userError } = useUser();
+  const { userError } = useUser();
   const { toast } = useToast();
-  const hasAttempted = useRef(false);
-
-  useEffect(() => {
-    // If auth is initialized but we have no user and aren't currently loading,
-    // initiate an anonymous sign-in.
-    if (!isUserLoading && !user && auth && !hasAttempted.current) {
-      hasAttempted.current = true;
-      initiateAnonymousSignIn(auth);
-    }
-  }, [user, isUserLoading, auth]);
 
   useEffect(() => {
     if (userError) {
       toast({
-        title: "Connection Error",
-        description: "Could not establish a secure connection to the Legal Vault. Please ensure Anonymous Auth is enabled in your Firebase console.",
+        title: "Authentication Error",
+        description: "Could not establish a secure connection. Please check your internet or refresh.",
         variant: "destructive"
       });
     }
