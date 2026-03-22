@@ -1,305 +1,254 @@
 
-"use client"
+'use client';
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { 
-  AlertCircle, 
   FileSearch, 
   Loader2, 
   ShieldAlert, 
-  ShieldCheck, 
-  ShieldQuestion, 
   Upload, 
-  FileText, 
+  Camera,
   X,
   Sparkles,
-  ChevronRight
+  Zap
 } from "lucide-react"
 import { identifyContractRisks, IdentifyContractRisksOutput } from "@/ai/flows/identify-contract-risks-flow"
 import { useToast } from "@/hooks/use-toast"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useUser, useFirestore } from "@/firebase"
-import { collection } from "firebase/firestore"
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates"
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
+import { collection, doc } from "firebase/firestore"
+import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { extractTextFromFile } from "@/lib/file-extractor"
+import { TrapCards } from "@/components/trap-card"
+import Tesseract from 'tesseract.js';
 
 export default function RisksPage() {
   const [content, setContent] = useState("")
   const [analysis, setAnalysis] = useState<IdentifyContractRisksOutput | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isExtracting, setIsExtracting] = useState(false)
+  const [isCameraActive, setIsCameraActive] = useState(false)
   const [fileName, setFileName] = useState<string | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
   const { user } = useUser()
   const db = useFirestore()
 
-  const handleAnalyze = async () => {
-    if (!content.trim()) {
-      toast({
-        title: "Input Required",
-        description: "Please paste text or upload a contract for analysis.",
-        variant: "destructive",
-      })
-      return
-    }
+  const userDocQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, 'users', user.uid);
+  }, [db, user]);
 
-    setIsLoading(true)
+  const { data: userData } = useDoc(userDocQuery);
+
+  const startCamera = async () => {
+    setIsCameraActive(true)
     try {
-      const result = await identifyContractRisks({ contractContent: content })
-      setAnalysis(result)
-
-      // Save metadata to Firestore Legal Vault
-      if (user && db) {
-        const docRef = collection(db, "users", user.uid, "documents")
-        addDocumentNonBlocking(docRef, {
-          userId: user.uid,
-          filename: fileName || `RiskScan-${new Date().getTime().toString().slice(-6)}.txt`,
-          storagePath: "vault-storage",
-          mimeType: "text/plain",
-          uploadDate: new Date().toISOString(),
-          status: "processed",
-          description: result.summary,
-          content: content
-        })
-        
-        toast({
-          title: "Scan Complete",
-          description: "Vulnerabilities have been identified and saved to your vault.",
-        })
-      } else {
-        toast({
-          title: "Identity Pending",
-          description: "Securing your vault connection. Please try again in 2 seconds.",
-          variant: "destructive"
-        })
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
       }
-
-    } catch (error) {
-      toast({
-        title: "Analysis Failed",
-        description: "There was an error processing the document. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
+    } catch (err) {
+      toast({ title: "Camera Error", description: "Could not access camera.", variant: "destructive" })
+      setIsCameraActive(false)
     }
   }
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
+  const capturePhoto = async () => {
+    if (videoRef.current && canvasRef.current) {
+      const context = canvasRef.current.getContext('2d')
+      canvasRef.current.width = videoRef.current.videoWidth
+      canvasRef.current.height = videoRef.current.videoHeight
+      context?.drawImage(videoRef.current, 0, 0)
+      
+      const stream = videoRef.current.srcObject as MediaStream
+      stream.getTracks().forEach(track => track.stop())
+      setIsCameraActive(false)
+
       setIsExtracting(true)
-      setFileName(file.name)
+      const dataUrl = canvasRef.current.toDataURL('image/png')
       try {
-        const text = await extractTextFromFile(file)
+        const { data: { text } } = await Tesseract.recognize(dataUrl, 'eng+hin')
         setContent(text)
-        toast({ title: "File Loaded", description: `Successfully extracted text from ${file.name}` })
-      } catch (error: any) {
-        setFileName(null)
-        toast({ title: "Extraction Failed", description: error.message || "Could not read file.", variant: "destructive" })
+        toast({ title: "Scan Complete", description: "Text extracted from paper." })
+      } catch (err) {
+        toast({ title: "OCR Error", description: "Could not read text.", variant: "destructive" })
       } finally {
         setIsExtracting(false)
       }
     }
   }
 
+  const handleAnalyze = async () => {
+    if (!user || !userData) return;
+    
+    if (userData.plan === 'free' && (userData.scansUsed || 0) >= 3) {
+      toast({ title: "Limit Reached", description: "Aapke 3 free scans khatam ho gaye. Upgrade to PRO!" });
+      return;
+    }
+
+    if (!content.trim()) {
+      toast({ title: "Input Required", description: "Please provide content to scan.", variant: "destructive" });
+      return;
+    }
+
+    setIsLoading(true)
+    try {
+      const result = await identifyContractRisks({ 
+        contractContent: content,
+        language: userData?.language || 'English'
+      })
+      setAnalysis(result)
+
+      if (user && db) {
+        const colRef = collection(db, "users", user.uid, "documents")
+        addDocumentNonBlocking(colRef, {
+          userId: user.uid,
+          filename: fileName || `Scan-${new Date().getTime().toString().slice(-6)}.txt`,
+          uploadDate: new Date().toISOString(),
+          status: "processed",
+          description: result.verdict,
+          content: content
+        })
+        
+        const userRef = doc(db, 'users', user.uid);
+        updateDocumentNonBlocking(userRef, {
+          scansUsed: (userData.scansUsed || 0) + 1
+        });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Analysis failed.", variant: "destructive" })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className="flex min-h-screen bg-slate-50/50">
-      <AppSidebar />
+      <div className="hidden md:block">
+        <AppSidebar />
+      </div>
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-6 bg-white/80 backdrop-blur-md sticky top-0 z-20 shadow-sm">
-          <SidebarTrigger />
-          <div className="flex items-center gap-2 px-2">
-            <h1 className="text-xl font-bold font-headline text-primary">Risk Identifier</h1>
-          </div>
+          <SidebarTrigger className="md:hidden" />
+          <h1 className="text-xl font-black text-primary">Risk Identifier</h1>
         </header>
-        <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            {/* Left Column: Input */}
-            <div className="lg:col-span-5 space-y-6">
-              <div className="space-y-4">
-                <h2 className="text-2xl font-black text-slate-800">Security Audit</h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Detect hidden liabilities, unfavorable terms, and missing clauses. Supports PDF, DOCX, and TXT files.
-                </p>
-              </div>
-
-              <Card className="shadow-2xl border-none ring-1 ring-slate-200 overflow-hidden">
-                <CardHeader className="bg-slate-50/50 border-b border-slate-100">
-                  <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                    <FileSearch className="h-4 w-4 text-accent" /> Audit Source
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Tabs defaultValue="upload" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 p-1 bg-slate-100 border-b rounded-none">
-                      <TabsTrigger value="upload" className="font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">Upload File</TabsTrigger>
-                      <TabsTrigger value="paste" className="font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">Paste Text</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="upload" className="p-6 m-0">
-                      <div 
-                        className="h-[300px] border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center p-8 text-center cursor-pointer hover:bg-slate-50 transition-all group"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <input 
-                          type="file" 
-                          ref={fileInputRef} 
-                          className="hidden" 
-                          accept=".pdf,.docx,.txt" 
-                          onChange={handleFileUpload} 
-                        />
-                        <div className="w-16 h-16 rounded-2xl bg-accent/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                          {isExtracting ? <Loader2 className="h-8 w-8 text-accent animate-spin" /> : <Upload className="h-8 w-8 text-accent" />}
-                        </div>
-                        <h4 className="font-bold text-slate-800">{isExtracting ? "Extracting..." : "Drop legal file here"}</h4>
-                        <p className="text-xs text-muted-foreground mt-1">Supports PDF, DOCX, and TXT</p>
-                        
-                        {fileName && (
-                          <div className="mt-6 flex items-center gap-2 px-3 py-1.5 bg-accent/10 rounded-lg animate-in fade-in slide-in-from-bottom-2">
-                            <FileText className="h-3.5 w-3.5 text-accent" />
-                            <span className="text-[10px] font-bold text-accent truncate max-w-[120px]">{fileName}</span>
-                            <X className="h-3 w-3 text-accent cursor-pointer" onClick={(e) => { e.stopPropagation(); setFileName(null); setContent(""); }} />
-                          </div>
-                        )}
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="paste" className="p-0 m-0">
-                      <Textarea
-                        placeholder="Paste your contract clauses here for immediate analysis..."
-                        className="min-h-[300px] border-0 focus-visible:ring-0 p-6 text-sm leading-relaxed bg-white rounded-none"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                      />
-                    </TabsContent>
-                  </Tabs>
-                </CardContent>
-              </Card>
-              
-              <Button 
-                onClick={handleAnalyze} 
-                disabled={isLoading || isExtracting} 
-                className="w-full h-14 text-lg font-bold shadow-2xl accent-gradient hover:opacity-90 rounded-2xl transition-all active:scale-[0.98]"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                    Scanning Infrastructure...
-                  </>
-                ) : (
-                  <>
-                    <ShieldAlert className="mr-3 h-5 w-5" />
-                    Initiate Risk Audit
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {/* Right Column: Results */}
-            <div className="lg:col-span-7">
-              {!analysis && !isLoading && (
-                <div className="h-full flex flex-col items-center justify-center py-32 bg-white rounded-3xl border border-dashed border-slate-200 text-slate-300">
-                  <ShieldQuestion className="h-24 w-24 mb-6 opacity-10" />
-                  <p className="text-xl font-bold">Audit Report Pending</p>
-                  <p className="text-sm">Complete the source check to generate analysis</p>
-                </div>
-              )}
-
-              {isLoading && (
-                <div className="space-y-6">
-                  <Card className="border-none shadow-sm animate-pulse">
-                    <CardHeader className="h-24 bg-slate-100" />
-                  </Card>
-                  <div className="space-y-4">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="h-40 w-full bg-white animate-pulse rounded-2xl border border-slate-100" />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {analysis && (
-                <div className="space-y-8 animate-in fade-in duration-700">
-                  <Card className="premium-gradient text-white border-none shadow-2xl overflow-hidden relative">
-                    <div className="absolute -right-4 -bottom-4 opacity-10">
-                      <ShieldCheck className="h-32 w-32" />
-                    </div>
-                    <CardHeader>
-                      <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-white/60 flex items-center gap-2">
-                        <Sparkles className="h-4 w-4" /> AI Threat Assessment
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-lg font-medium leading-relaxed">{analysis.summary}</p>
-                    </CardContent>
-                  </Card>
-
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400">Identified Vulnerabilities</h3>
-                      <Badge variant="outline" className="font-bold px-3 py-1 rounded-full bg-slate-100 border-slate-200">
-                        {analysis.risks.length} Issues Found
-                      </Badge>
-                    </div>
-
-                    <div className="space-y-4">
-                      {analysis.risks.map((risk, idx) => (
-                        <Card key={idx} className="border-none shadow-md hover:shadow-lg transition-all ring-1 ring-slate-100 bg-white overflow-hidden">
-                          <div className={`h-1 w-full ${
-                            risk.severity === 'High' ? 'bg-red-500' : 
-                            risk.severity === 'Medium' ? 'bg-amber-500' : 'bg-blue-500'
-                          }`} />
-                          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                            <Badge className={`font-black uppercase tracking-widest text-[10px] ${
-                              risk.severity === 'High' ? 'bg-red-100 text-red-700' : 
-                              risk.severity === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
-                            }`}>
-                              {risk.severity} Severity
-                            </Badge>
-                            <AlertCircle className={`h-4 w-4 ${
-                              risk.severity === 'High' ? 'text-red-500' : 
-                              risk.severity === 'Medium' ? 'text-amber-500' : 'text-blue-500'
-                            }`} />
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-100 text-[11px] font-mono italic text-slate-500">
-                              "{risk.clause}"
-                            </div>
-                            <div className="space-y-1">
-                              <p className="font-bold text-sm text-primary flex items-center gap-2">
-                                <ChevronRight className="h-3 w-3" /> Implication & Mitigation
-                              </p>
-                              <p className="text-sm text-slate-600 leading-relaxed">{risk.explanation}</p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-
-                    {analysis.risks.length === 0 && (
-                      <Card className="border-emerald-100 bg-emerald-50/50 shadow-none">
-                        <CardContent className="py-16 flex flex-col items-center justify-center text-center">
-                          <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
-                            <ShieldCheck className="h-8 w-8 text-emerald-600" />
-                          </div>
-                          <p className="text-xl font-black text-emerald-800">Absolute Integrity</p>
-                          <p className="text-sm text-emerald-600 max-w-xs mt-2">No critical risks or unfavorable terms were detected in this analysis.</p>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+        
+        <main className="flex-1 p-4 md:p-8 max-w-4xl mx-auto w-full space-y-8">
+          
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black text-slate-800">Security Audit</h2>
+            <p className="text-sm text-slate-500 font-medium">Detect hidden 'traps' in digital or paper contracts.</p>
           </div>
+
+          <Card className="shadow-xl border-none ring-1 ring-slate-100 overflow-hidden rounded-3xl">
+            <Tabs defaultValue="upload" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 p-1 bg-slate-100 border-b rounded-none">
+                <TabsTrigger value="upload" className="font-black text-[10px] uppercase tracking-widest py-3">File</TabsTrigger>
+                <TabsTrigger value="paste" className="font-black text-[10px] uppercase tracking-widest py-3">Paste</TabsTrigger>
+                <TabsTrigger value="camera" className="font-black text-[10px] uppercase tracking-widest py-3" onClick={startCamera}>📸 Scan</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="upload" className="p-8 m-0 min-h-[300px] flex items-center justify-center">
+                <div 
+                  className="w-full h-full border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center p-12 text-center cursor-pointer hover:bg-slate-50 group"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.docx,.txt" onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      setIsExtracting(true); setFileName(file.name);
+                      try { setContent(await extractTextFromFile(file)); } catch (err) { setFileName(null); } finally { setIsExtracting(false); }
+                    }
+                  }} />
+                  <div className="w-16 h-16 rounded-2xl bg-accent/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    {isExtracting ? <Loader2 className="h-8 w-8 text-accent animate-spin" /> : <Upload className="h-8 w-8 text-accent" />}
+                  </div>
+                  <h4 className="font-black text-slate-800 uppercase tracking-widest text-xs">{isExtracting ? "Extracting..." : "Upload Legal File"}</h4>
+                  {fileName && <p className="mt-4 text-xs font-bold text-accent px-3 py-1 bg-accent/5 rounded-full">{fileName}</p>}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="paste" className="p-0 m-0">
+                <Textarea
+                  placeholder="Paste contract clauses here..."
+                  className="min-h-[300px] border-0 focus-visible:ring-0 p-8 text-base leading-relaxed bg-white rounded-none font-medium"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                />
+              </TabsContent>
+
+              <TabsContent value="camera" className="p-0 m-0 min-h-[300px] relative bg-black flex items-center justify-center overflow-hidden">
+                <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+                <canvas ref={canvasRef} className="hidden" />
+                {isCameraActive && (
+                  <Button onClick={capturePhoto} className="absolute bottom-6 h-16 w-16 rounded-full bg-white text-black shadow-2xl active:scale-95">
+                    <Camera className="h-8 w-8" />
+                  </Button>
+                )}
+                <Button variant="ghost" onClick={() => setIsCameraActive(false)} className="absolute top-4 right-4 text-white">
+                  <X className="h-6 w-6" />
+                </Button>
+                {isExtracting && (
+                  <div className="absolute inset-0 bg-black/50 backdrop-blur-md flex flex-col items-center justify-center text-white">
+                    <Loader2 className="h-10 w-10 animate-spin mb-4" />
+                    <p className="font-black uppercase tracking-widest text-xs">Reading Paper...</p>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </Card>
+          
+          <Button 
+            onClick={handleAnalyze} 
+            disabled={isLoading || isExtracting || !content.trim()} 
+            className="w-full h-16 text-lg font-black shadow-2xl accent-gradient rounded-3xl"
+          >
+            {isLoading ? <Loader2 className="mr-3 h-6 w-6 animate-spin" /> : <Zap className="mr-3 h-6 w-6" />}
+            Initiate Risk Audit
+          </Button>
+
+          {analysis && (
+            <div className="space-y-8 animate-in fade-in duration-500 pb-12">
+              <Card className={`border-none shadow-xl rounded-3xl p-8 text-white relative overflow-hidden ${
+                analysis.riskLevel === 'SAFE' ? 'bg-emerald-600' :
+                analysis.riskLevel === 'CAUTION' ? 'bg-amber-500' : 'bg-red-600'
+              }`}>
+                <div className="absolute -right-4 -bottom-4 opacity-10">
+                  <ShieldAlert className="h-32 w-32" />
+                </div>
+                <div className="relative z-10 space-y-4">
+                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/60">
+                    <Sparkles className="h-4 w-4" /> Verdict
+                  </div>
+                  <h3 className="text-2xl font-black leading-tight">
+                    {analysis.riskLevel === 'SAFE' ? '✅ Safe Lagta Hai!' : 
+                     analysis.riskLevel === 'CAUTION' ? '⚠️ Pehle Theek Karo' : '🛑 Sign Mat Karo!'}
+                  </h3>
+                  <p className="text-lg font-medium opacity-90 leading-snug">{analysis.verdict}</p>
+                  
+                  <div className="pt-4 space-y-2">
+                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                      <span>Risk Meter</span>
+                      <span>{analysis.riskScore}% Risky</span>
+                    </div>
+                    <div className="h-4 w-full bg-white/20 rounded-full overflow-hidden">
+                      <div className="h-full bg-white transition-all duration-1000" style={{ width: `${analysis.riskScore}%` }} />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              <TrapCards traps={analysis.traps} />
+            </div>
+          )}
         </main>
       </SidebarInset>
     </div>

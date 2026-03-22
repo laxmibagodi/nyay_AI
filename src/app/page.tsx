@@ -1,136 +1,152 @@
+
+'use client';
+
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { BookText, FileSearch, FilePlus2, MessageSquareQuote, ShieldAlert, ShieldCheck, ArrowRight, Files, Activity, Zap } from "lucide-react"
+import { BookText, FileSearch, FilePlus2, MessageSquareQuote, ShieldCheck, ArrowRight, Files, Activity, Zap, ShieldAlert, Sparkles, User } from "lucide-react"
 import Link from "next/link"
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase"
+import { doc, query, collection, orderBy, limit } from "firebase/firestore"
+import { format } from "date-fns"
 
 export default function DashboardPage() {
+  const { user } = useUser();
+  const db = useFirestore();
+  
+  const userDocQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, 'users', user.uid);
+  }, [db, user]);
+
+  const { data: userData } = useDoc(userDocQuery);
+
+  const recentDocsQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return query(
+      collection(db, 'users', user.uid, 'documents'),
+      orderBy('uploadDate', 'desc'),
+      limit(3)
+    );
+  }, [db, user]);
+
+  const { data: recentDocs } = useCollection(recentDocsQuery);
+
   return (
     <div className="flex min-h-screen bg-slate-50/50">
-      <AppSidebar />
+      <div className="hidden md:block">
+        <AppSidebar />
+      </div>
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-6 bg-white/80 backdrop-blur-md sticky top-0 z-20 shadow-sm">
-          <SidebarTrigger />
-          <div className="flex items-center gap-2 px-2">
-            <h1 className="text-xl font-bold font-headline text-primary">Intelligence Center</h1>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-6 bg-white/80 backdrop-blur-md sticky top-0 z-20 shadow-sm md:hidden">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-6 w-6 text-primary" />
+            <h1 className="text-xl font-black text-primary tracking-tighter">Nyaya AI</h1>
           </div>
         </header>
-        <main className="flex-1 p-8 space-y-10 max-w-7xl mx-auto w-full">
-          {/* Hero Banner */}
-          <section className="relative rounded-3xl premium-gradient p-10 text-white overflow-hidden shadow-2xl">
-            <div className="relative z-10 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-bold mb-6 backdrop-blur-sm">
-                <Zap className="h-3 w-3 text-yellow-400" /> V2.0 LIVE: Advanced Risk Analysis
-              </div>
-              <h2 className="text-4xl font-headline font-black mb-4 leading-tight">
-                Fortify Your Business Legal Infrastructure.
-              </h2>
-              <p className="text-lg text-white/80 mb-8 font-medium">
-                Harness GenAI to translate jargon, identify contract pitfalls, and draft ironclad agreements in seconds.
-              </p>
-              <div className="flex gap-4">
-                <Button asChild size="lg" className="bg-white text-primary hover:bg-slate-100 rounded-xl px-8 shadow-lg transition-all hover:scale-105">
-                  <Link href="/generator">Draft Document</Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="bg-white/5 border-white/20 text-white hover:bg-white/10 rounded-xl px-8 backdrop-blur-md">
-                  <Link href="/assistant">Talk to Assistant</Link>
-                </Button>
-              </div>
+
+        <main className="flex-1 p-4 md:p-8 space-y-6 max-w-7xl mx-auto w-full">
+          {/* Mobile Header */}
+          <section className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <h1 className="text-2xl font-black text-slate-800">
+                नमस्ते {userData?.name?.split(' ')[0] || 'Dost'}! 👋
+              </h1>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Legal Status: Active</p>
             </div>
-            <div className="absolute top-0 right-0 p-10 opacity-10 pointer-events-none">
-              <ShieldCheck className="h-64 w-64 rotate-12" />
-            </div>
+            <Link href="/profile">
+              <div className="w-12 h-12 rounded-2xl bg-white border-2 border-slate-100 flex items-center justify-center shadow-sm">
+                <User className="h-6 w-6 text-slate-400" />
+              </div>
+            </Link>
           </section>
 
-          {/* Key Metrics */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {[
-              { label: "Active Documents", value: "24", sub: "+3 this week", icon: Files, color: "text-blue-600" },
-              { label: "Compliance Score", value: "92%", sub: "High Stability", icon: ShieldCheck, color: "text-emerald-600" },
-              { label: "Unresolved Risks", value: "02", sub: "Needs Review", icon: ShieldAlert, color: "text-orange-600" },
-              { label: "AI Interactions", value: "158", sub: "Monthly Usage", icon: Activity, color: "text-purple-600" },
-            ].map((stat, i) => (
-              <Card key={i} className="border-none shadow-sm hover:shadow-md transition-shadow">
-                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                  <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{stat.label}</CardTitle>
-                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-black">{stat.value}</div>
-                  <p className="text-[10px] text-muted-foreground mt-1 font-medium">{stat.sub}</p>
-                </CardContent>
-              </Card>
-            ))}
+          {/* Primary Action Button */}
+          <Link href="/risks" className="block">
+            <Card className="accent-gradient border-none shadow-xl rounded-3xl p-6 text-white relative overflow-hidden group">
+              <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform">
+                <ShieldAlert className="h-40 w-40" />
+              </div>
+              <div className="relative z-10 flex items-center gap-6">
+                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner">
+                  <FileSearch className="h-8 w-8" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-black leading-tight">Contract Risk Scan</h2>
+                  <p className="text-sm font-medium text-white/70">Check for 'traps' in your papers.</p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                  <ArrowRight className="h-5 w-5" />
+                </div>
+              </div>
+            </Card>
+          </Link>
+
+          {/* Usage Stats */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="border-none shadow-sm rounded-2xl p-4">
+              <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Usage</p>
+              <div className="text-xl font-black">{userData?.scansUsed || 0} / 3</div>
+              <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase">Free Scans Used</p>
+            </Card>
+            <Card className="border-none shadow-sm rounded-2xl p-4">
+              <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Plan</p>
+              <div className="text-xl font-black uppercase text-emerald-600">FREE</div>
+              <Link href="/pricing" className="text-[10px] text-primary font-bold mt-1 uppercase underline underline-offset-2">Upgrade to Pro</Link>
+            </Card>
           </div>
 
-          {/* Pillars of Power */}
-          <section className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-2xl font-headline font-bold text-slate-800">Operational Pillars</h3>
-              <p className="text-sm text-muted-foreground">Select a module to begin</p>
-            </div>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {/* Modules Grid */}
+          <section className="space-y-4">
+            <h3 className="text-lg font-black text-slate-800">Legal Toolbox</h3>
+            <div className="grid grid-cols-2 gap-4">
               {[
-                { title: "Jargon Translator", desc: "Convert archaic legal speak into actionable English.", icon: BookText, href: "/translator", theme: "from-blue-500 to-indigo-600" },
-                { title: "Risk Analytics", desc: "Automated vulnerability scanning for your contracts.", icon: FileSearch, href: "/risks", theme: "from-violet-500 to-purple-600" },
-                { title: "Smart Generator", desc: "Context-aware drafting for high-speed business.", icon: FilePlus2, href: "/generator", theme: "from-emerald-500 to-teal-600" },
-                { title: "Legal Assistant", desc: "Strategic what-if guidance for business dilemmas.", icon: MessageSquareQuote, href: "/assistant", theme: "from-orange-500 to-rose-600" },
+                { title: "Jargon", icon: BookText, href: "/translator", color: "bg-blue-500" },
+                { title: "Vault", icon: Files, href: "/documents", color: "bg-indigo-500" },
+                { title: "Ask AI", icon: MessageSquareQuote, href: "/assistant", color: "bg-rose-500" },
+                { title: "Draft", icon: FilePlus2, href: "/generator", color: "bg-emerald-500" },
               ].map((pill) => (
-                <Link key={pill.title} href={pill.href} className="group">
-                  <Card className="h-full border-none shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden relative">
-                    <div className={`h-1.5 w-full bg-gradient-to-r ${pill.theme}`} />
-                    <CardHeader>
-                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${pill.theme} flex items-center justify-center mb-4 text-white shadow-lg group-hover:scale-110 transition-transform`}>
-                        <pill.icon className="h-6 w-6" />
-                      </div>
-                      <CardTitle className="text-xl group-hover:text-accent transition-colors">{pill.title}</CardTitle>
-                      <CardDescription className="leading-relaxed text-sm">{pill.desc}</CardDescription>
-                    </CardHeader>
+                <Link key={pill.title} href={pill.href}>
+                  <Card className="h-28 border-none shadow-sm flex flex-col items-center justify-center gap-3 rounded-2xl active:scale-95 transition-transform">
+                    <div className={`w-10 h-10 rounded-xl ${pill.color} flex items-center justify-center text-white shadow-lg`}>
+                      <pill.icon className="h-5 w-5" />
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-600">{pill.title}</span>
                   </Card>
                 </Link>
               ))}
             </div>
           </section>
 
-          {/* Recent Vault Activity */}
-          <section className="space-y-6">
+          {/* Recent Documents */}
+          <section className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-2xl font-headline font-bold text-slate-800">Recent Vault Activity</h3>
-              <Button variant="ghost" className="text-accent font-bold" asChild>
-                <Link href="/documents">View All Vault <ArrowRight className="h-4 w-4 ml-2" /></Link>
-              </Button>
+              <h3 className="text-lg font-black text-slate-800">Recent Vault</h3>
+              <Link href="/documents" className="text-xs font-bold text-primary">View All</Link>
             </div>
-            <Card className="border-none shadow-sm overflow-hidden">
-              <div className="divide-y divide-slate-100">
-                {[
-                  { name: "Vendor Master Agreement - Q1", type: "Risk Analysis", date: "45 mins ago", status: "Analyzed" },
-                  { name: "Confidentiality Deed - Project X", type: "Generator", date: "Yesterday", status: "Draft" },
-                  { name: "Website Terms & Conditions", type: "Translation", date: "3 days ago", status: "Secured" },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-6 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
-                        <Files className="h-5 w-5 text-slate-500" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-800">{item.name}</p>
-                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{item.type} • {item.date}</p>
-                      </div>
+            <div className="space-y-3">
+              {recentDocs?.map((doc, idx) => (
+                <Card key={idx} className="border-none shadow-sm p-4 flex items-center justify-between rounded-2xl">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                      <Files className="h-5 w-5 text-slate-500" />
                     </div>
-                    <div className="flex items-center gap-6">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                        item.status === 'Analyzed' ? 'bg-orange-100 text-orange-700' : 
-                        item.status === 'Secured' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {item.status}
-                      </span>
-                      <Button variant="outline" size="sm" className="rounded-lg font-bold">Details</Button>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800 truncate max-w-[150px]">{doc.filename}</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase">{format(new Date(doc.uploadDate), 'dd MMM yyyy')}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </Card>
+                  <Button variant="ghost" size="sm" className="h-8 rounded-lg font-bold text-primary">View</Button>
+                </Card>
+              ))}
+              {(!recentDocs || recentDocs.length === 0) && (
+                <div className="py-10 text-center text-slate-300">
+                  <Files className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                  <p className="text-xs font-bold">Your vault is empty</p>
+                </div>
+              )}
+            </div>
           </section>
         </main>
       </SidebarInset>
