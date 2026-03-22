@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useRef, useEffect } from "react"
@@ -24,8 +23,8 @@ import {
 } from "lucide-react"
 import { getLegalScenarioGuidance, GetLegalScenarioGuidanceOutput } from "@/ai/flows/get-legal-guidance-flow"
 import { useToast } from "@/hooks/use-toast"
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query, orderBy } from "firebase/firestore"
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
+import { collection, query, orderBy, doc } from "firebase/firestore"
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -36,6 +35,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { t, Language } from "@/lib/translations"
 
 interface Message {
   role: 'user' | 'assistant';
@@ -44,9 +44,7 @@ interface Message {
 }
 
 export default function AssistantPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Greetings. I'm your Nyay AI Legal Strategist. You can consult me on 'what-if' scenarios or select a document from your Legal Vault to perform a contextual deep-dive. How may I assist your business today?" }
-  ])
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [selectedDoc, setSelectedDoc] = useState<any>(null)
@@ -54,6 +52,22 @@ export default function AssistantPage() {
   const { toast } = useToast()
   const { user } = useUser()
   const db = useFirestore()
+
+  const userDocQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, 'users', user.uid);
+  }, [db, user]);
+
+  const { data: userData } = useDoc(userDocQuery);
+  const lang = (userData?.language || 'en') as Language;
+
+  useEffect(() => {
+    if (lang && messages.length === 0) {
+      setMessages([
+        { role: 'assistant', content: lang === 'en' ? "Greetings. I'm your Nyay AI Legal Strategist. How may I assist your business today?" : t(lang, 'welcome') + ". मैं आपका Nyay AI कानूनी रणनीतिकार हूँ। मैं आज आपके व्यवसाय की कैसे सहायता कर सकता हूँ?" }
+      ]);
+    }
+  }, [lang, messages.length]);
 
   const docsQuery = useMemoFirebase(() => {
     if (!db || !user) return null
@@ -118,7 +132,7 @@ export default function AssistantPage() {
             <div className="w-8 h-8 rounded-lg premium-gradient flex items-center justify-center text-white">
               <ShieldAlert className="h-5 w-5" />
             </div>
-            <h1 className="text-xl font-bold font-headline text-primary tracking-tight">AI Strategy Room</h1>
+            <h1 className="text-xl font-bold font-headline text-primary tracking-tight">{t(lang, 'strategyRoom')}</h1>
           </div>
         </header>
 
@@ -134,30 +148,25 @@ export default function AssistantPage() {
                   <div className="flex items-center gap-2 mt-0.5">
                     <div className="flex items-center gap-1">
                       <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <span className="text-[10px] text-emerald-600 font-black uppercase tracking-widest">Active Intelligence</span>
+                      <span className="text-[10px] text-emerald-600 font-black uppercase tracking-widest">{t(lang, 'activeIntelligence')}</span>
                     </div>
-                    <span className="text-slate-300">|</span>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1">
-                      <Sparkles className="h-3 w-3 text-accent" /> MSME Law Engine
-                    </span>
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <p className="text-[10px] font-black uppercase text-slate-400 hidden sm:block">Context Layer:</p>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2 font-bold h-10 px-4 rounded-xl border-slate-200 hover:bg-white hover:shadow-md transition-all">
                       <Files className="h-4 w-4 text-accent" />
                       {selectedDoc ? (
                         <span className="max-w-[140px] truncate">{selectedDoc.filename}</span>
-                      ) : "Select Vault Document"}
+                      ) : t(lang, 'selectDoc')}
                       <ChevronDown className="h-3 w-3 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-80 p-2 rounded-2xl shadow-2xl border-none ring-1 ring-slate-200">
-                    <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-3 py-2">Managed Legal Vault</DropdownMenuLabel>
+                    <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-3 py-2">{t(lang, 'managedVault')}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       onClick={() => setSelectedDoc(null)}
@@ -168,8 +177,7 @@ export default function AssistantPage() {
                           <BookOpen className="h-5 w-5 text-slate-500" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-bold text-sm">General Consultation</span>
-                          <span className="text-[10px] text-slate-400">Broad legal guidance</span>
+                          <span className="font-bold text-sm">{t(lang, 'generalConsult')}</span>
                         </div>
                       </div>
                     </DropdownMenuItem>
@@ -187,21 +195,10 @@ export default function AssistantPage() {
                             </div>
                             <div className="flex flex-col overflow-hidden">
                               <span className="font-bold text-sm truncate">{doc.filename}</span>
-                              <span className="text-[10px] text-slate-400 font-medium truncate">Uploaded: {new Date(doc.uploadDate).toLocaleDateString()}</span>
                             </div>
                           </div>
                         </DropdownMenuItem>
                       ))}
-                      
-                      {(!documents || documents.length === 0) && (
-                        <div className="p-10 text-center">
-                          <Files className="h-10 w-10 mx-auto text-slate-100 mb-3" />
-                          <p className="text-xs font-bold text-slate-400">Vault is Empty</p>
-                          <p className="text-[10px] text-slate-400 mt-2 px-4 leading-relaxed">
-                            Upload documents in Translator or Risk modules to discuss them here.
-                          </p>
-                        </div>
-                      )}
                     </ScrollArea>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -265,7 +262,7 @@ export default function AssistantPage() {
                     </div>
                     <div className="p-5 bg-white border border-slate-100 rounded-3xl rounded-tl-none shadow-sm flex items-center gap-3">
                       <Loader2 className="h-5 w-5 animate-spin text-accent" />
-                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Consulting Intelligence...</span>
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Consulting...</span>
                     </div>
                   </div>
                 </div>
@@ -273,24 +270,6 @@ export default function AssistantPage() {
             </CardContent>
 
             <CardFooter className="p-6 border-t bg-white flex flex-col gap-4">
-              {selectedDoc && (
-                <div className="w-full flex items-center justify-between px-4 py-2 bg-accent/5 rounded-2xl border border-accent/10 animate-in slide-in-from-bottom-2">
-                  <div className="flex items-center gap-3">
-                    <Badge className="bg-accent text-white hover:bg-accent border-none text-[9px] font-black px-2 py-0.5">VAULT CONTEXT ACTIVE</Badge>
-                    <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
-                      <FileText className="h-3.5 w-3.5 text-accent" /> {selectedDoc.filename}
-                    </span>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-7 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-500 hover:bg-transparent" 
-                    onClick={() => setSelectedDoc(null)}
-                  >
-                    Clear Context
-                  </Button>
-                </div>
-              )}
               <form 
                 onSubmit={(e) => { e.preventDefault(); handleSend(); }}
                 className="w-full flex gap-3"
@@ -298,7 +277,7 @@ export default function AssistantPage() {
                 <div className="relative flex-1">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
                   <Input 
-                    placeholder={selectedDoc ? `Inquire about "${selectedDoc.filename}"...` : "Discuss a legal scenario or strategy..."}
+                    placeholder={selectedDoc ? `Inquire about "${selectedDoc.filename}"...` : "Discuss a legal scenario..."}
                     className="flex-1 h-14 pl-12 bg-slate-50 border-slate-200 rounded-2xl font-bold shadow-inner transition-all focus-visible:ring-accent focus-visible:bg-white"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}

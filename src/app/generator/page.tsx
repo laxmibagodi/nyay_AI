@@ -12,6 +12,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FilePlus2, Loader2, Download, Copy, RefreshCw } from "lucide-react"
 import { generateLegalDocument, GenerateLegalDocumentInput } from "@/ai/flows/generate-legal-document-flow"
 import { useToast } from "@/hooks/use-toast"
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
+import { doc } from "firebase/firestore"
+import { t, Language } from "@/lib/translations"
 
 export default function GeneratorPage() {
   const [formData, setFormData] = useState<GenerateLegalDocumentInput>({
@@ -25,6 +28,16 @@ export default function GeneratorPage() {
   const [generatedDoc, setGeneratedDoc] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
+  const { user } = useUser()
+  const db = useFirestore()
+
+  const userDocQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, 'users', user.uid);
+  }, [db, user]);
+
+  const { data: userData } = useDoc(userDocQuery);
+  const lang = (userData?.language || 'en') as Language;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,7 +74,7 @@ export default function GeneratorPage() {
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-background/50 backdrop-blur-md sticky top-0 z-10">
           <SidebarTrigger />
           <div className="flex items-center gap-2 px-4">
-            <h1 className="text-lg font-semibold font-headline">Legal Document Generator</h1>
+            <h1 className="text-lg font-semibold font-headline">{t(lang, 'generator')}</h1>
           </div>
         </header>
         <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
@@ -70,14 +83,14 @@ export default function GeneratorPage() {
               <Card className="shadow-none border h-full bg-card/50">
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
-                    <FilePlus2 className="h-4 w-4" /> Drafting Requirements
+                    <FilePlus2 className="h-4 w-4" /> {t(lang, 'draftingReq')}
                   </CardTitle>
                   <CardDescription>Fill in the details to auto-generate your professional document</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-2">
-                      <Label>Document Type</Label>
+                      <Label>{t(lang, 'docType')}</Label>
                       <Select 
                         value={formData.documentType} 
                         onValueChange={(val: any) => setFormData({...formData, documentType: val})}
@@ -95,7 +108,7 @@ export default function GeneratorPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Your Company Name</Label>
+                        <Label>{t(lang, 'companyName')}</Label>
                         <Input 
                           placeholder="E.g., Nyay AI Pvt Ltd" 
                           value={formData.clientName}
@@ -103,7 +116,7 @@ export default function GeneratorPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Counterparty Name</Label>
+                        <Label>{t(lang, 'counterpartyName')}</Label>
                         <Input 
                           placeholder="E.g., Vendor Inc." 
                           value={formData.otherPartyName}
@@ -113,7 +126,7 @@ export default function GeneratorPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Purpose / Scope</Label>
+                      <Label>{t(lang, 'purpose')}</Label>
                       <Input 
                         placeholder="E.g., Sharing sensitive IP for software dev" 
                         value={formData.purpose}
@@ -122,7 +135,7 @@ export default function GeneratorPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Specific Key Terms</Label>
+                      <Label>{t(lang, 'keyTerms')}</Label>
                       <Textarea 
                         placeholder="E.g., 2-year duration, 30-day notice period..." 
                         className="min-h-[100px]"
@@ -133,7 +146,7 @@ export default function GeneratorPage() {
 
                     <Button type="submit" disabled={isLoading} className="w-full h-12 bg-accent text-lg">
                       {isLoading ? <Loader2 className="animate-spin mr-2" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                      Generate Document
+                      {t(lang, 'generateBtn')}
                     </Button>
                   </form>
                 </CardContent>

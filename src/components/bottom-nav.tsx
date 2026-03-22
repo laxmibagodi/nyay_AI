@@ -1,20 +1,33 @@
-
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Files, MessageSquareQuote, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { t, Language } from '@/lib/translations';
 
-const navItems = [
-  { label: 'Home', href: '/', icon: LayoutDashboard },
-  { label: 'Vault', href: '/documents', icon: Files },
-  { label: 'Ask', href: '/assistant', icon: MessageSquareQuote },
-  { label: 'Profile', href: '/profile', icon: User },
+const getNavItems = (lang: Language) => [
+  { label: t(lang, 'dashboard'), href: '/', icon: LayoutDashboard },
+  { label: t(lang, 'vault'), href: '/documents', icon: Files },
+  { label: t(lang, 'assistant'), href: '/assistant', icon: MessageSquareQuote },
+  { label: t(lang, 'profile'), href: '/profile', icon: User },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { user } = useUser();
+  const db = useFirestore();
+
+  const userDocQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, 'users', user.uid);
+  }, [db, user]);
+
+  const { data: userData } = useDoc(userDocQuery);
+  const lang = (userData?.language || 'en') as Language;
+  const navItems = getNavItems(lang);
   
   if (['/sign-in', '/sign-up', '/verify', '/onboarding'].includes(pathname)) return null;
 

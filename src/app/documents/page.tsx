@@ -16,15 +16,24 @@ import {
   ShieldAlert,
   Loader2
 } from "lucide-react"
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { collection, query, orderBy, doc } from "firebase/firestore"
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { format } from "date-fns"
+import { t, Language } from "@/lib/translations"
 
 export default function DocumentsPage() {
   const [search, setSearch] = useState("")
   const { user } = useUser()
   const db = useFirestore()
+
+  const userDocQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, 'users', user.uid);
+  }, [db, user]);
+
+  const { data: userData } = useDoc(userDocQuery);
+  const lang = (userData?.language || 'en') as Language;
 
   const docsQuery = useMemoFirebase(() => {
     if (!db || !user) return null
@@ -54,7 +63,7 @@ export default function DocumentsPage() {
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-background/50 backdrop-blur-md sticky top-0 z-10">
           <SidebarTrigger />
           <div className="flex items-center gap-2 px-4">
-            <h1 className="text-lg font-semibold font-headline">My Documents</h1>
+            <h1 className="text-lg font-semibold font-headline">{t(lang, 'vault')}</h1>
           </div>
         </header>
         <main className="flex-1 p-6 max-w-7xl mx-auto w-full space-y-6">
@@ -62,7 +71,7 @@ export default function DocumentsPage() {
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Search documents by name..." 
+                placeholder={t(lang, 'searchDocs')}
                 className="pl-10"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -78,7 +87,7 @@ export default function DocumentsPage() {
           <Card className="shadow-none border overflow-hidden">
             <CardHeader className="bg-muted/30">
               <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                Managed Legal Vault
+                {t(lang, 'managedVault')}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -86,7 +95,7 @@ export default function DocumentsPage() {
                 {isLoading ? (
                   <div className="py-20 flex flex-col items-center justify-center">
                     <Loader2 className="h-8 w-8 animate-spin text-accent" />
-                    <p className="mt-2 text-sm text-muted-foreground">Syncing vault...</p>
+                    <p className="mt-2 text-sm text-muted-foreground">{t(lang, 'syncingVault')}</p>
                   </div>
                 ) : filteredDocs.length > 0 ? filteredDocs.map((docItem) => (
                   <div key={docItem.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/20 transition-colors group">
@@ -136,8 +145,7 @@ export default function DocumentsPage() {
                 )) : (
                   <div className="py-20 flex flex-col items-center justify-center text-muted-foreground opacity-50">
                     <Files className="h-16 w-16 mb-4" />
-                    <p className="text-lg font-medium">No documents found</p>
-                    <p className="text-sm">Upload a document in the Translator or Risk Identifier to see it here.</p>
+                    <p className="text-lg font-medium">{t(lang, 'noDocs')}</p>
                   </div>
                 )}
               </div>

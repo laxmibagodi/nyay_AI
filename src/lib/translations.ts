@@ -1,4 +1,3 @@
-
 export type Language = 'hi' | 'en' | 'kn' | 'ta' | 'te' | 'mr';
 
 export const translations: Record<Language, any> = {
@@ -25,7 +24,39 @@ export const translations: Record<Language, any> = {
     riskHeatmap: "Legal Risk Heatmap",
     googleSignIn: "Continue with Google",
     startProtecting: "Start Protecting Free",
-    logout: "Sign Out"
+    logout: "Sign Out",
+    // Translator
+    legalInput: "Legal Input",
+    simplificationOutput: "Simplification Output",
+    pasteText: "Paste Text",
+    uploadFile: "Upload File",
+    translateBtn: "Translate to Plain English",
+    extracting: "Extracting Text...",
+    // Risks
+    securityAudit: "Security Audit",
+    detectTraps: "Detect hidden 'traps' in digital or paper contracts.",
+    initiateAudit: "Initiate Risk Audit",
+    cameraScan: "📸 Scan",
+    fileTab: "File",
+    pasteTab: "Paste",
+    // Generator
+    draftingReq: "Drafting Requirements",
+    docType: "Document Type",
+    companyName: "Your Company Name",
+    counterpartyName: "Counterparty Name",
+    purpose: "Purpose / Scope",
+    keyTerms: "Specific Key Terms",
+    generateBtn: "Generate Document",
+    // Documents
+    searchDocs: "Search documents by name...",
+    managedVault: "Managed Legal Vault",
+    syncingVault: "Syncing vault...",
+    noDocs: "No documents found",
+    // Assistant
+    strategyRoom: "AI Strategy Room",
+    activeIntelligence: "Active Intelligence",
+    selectDoc: "Select Vault Document",
+    generalConsult: "General Consultation"
   },
   hi: {
     welcome: "नमस्ते",
@@ -50,7 +81,39 @@ export const translations: Record<Language, any> = {
     riskHeatmap: "रिस्क हीटमैप",
     googleSignIn: "Google के साथ जारी रखें",
     startProtecting: "मुफ्त में सुरक्षा शुरू करें",
-    logout: "साइन आउट"
+    logout: "साइन आउट",
+    // Translator
+    legalInput: "लीगल इनपुट",
+    simplificationOutput: "सरलीकरण आउटपुट",
+    pasteText: "टेक्स्ट पेस्ट करें",
+    uploadFile: "फाइल अपलोड करें",
+    translateBtn: "सादा अंग्रेजी में अनुवाद करें",
+    extracting: "टेक्स्ट निकाला जा रहा है...",
+    // Risks
+    securityAudit: "सुरक्षा ऑडिट",
+    detectTraps: "डिजिटल या कागजी अनुबंधों में छिपे 'जाल' का पता लगाएं।",
+    initiateAudit: "रिस्क ऑडिट शुरू करें",
+    cameraScan: "📸 स्कैन",
+    fileTab: "फाइल",
+    pasteTab: "पेस्ट",
+    // Generator
+    draftingReq: "ड्राफ्टिंग आवश्यकताएं",
+    docType: "दस्तावेज़ का प्रकार",
+    companyName: "आपकी कंपनी का नाम",
+    counterpartyName: "प्रतिपक्षी का नाम",
+    purpose: "उद्देश्य / दायरा",
+    keyTerms: "विशिष्ट मुख्य शर्तें",
+    generateBtn: "दस्तावेज़ उत्पन्न करें",
+    // Documents
+    searchDocs: "नाम से दस्तावेज़ खोजें...",
+    managedVault: "प्रबंधित लीगल वॉल्ट",
+    syncingVault: "वॉल्ट सिंक हो रहा है...",
+    noDocs: "कोई दस्तावेज़ नहीं मिला",
+    // Assistant
+    strategyRoom: "AI रणनीति कक्ष",
+    activeIntelligence: "सक्रिय इंटेलिजेंस",
+    selectDoc: "वॉल्ट दस्तावेज़ चुनें",
+    generalConsult: "सामान्य परामर्श"
   },
   mr: {
     welcome: "नमस्कार",
@@ -75,7 +138,39 @@ export const translations: Record<Language, any> = {
     riskHeatmap: "रिस्क हीटमॅप",
     googleSignIn: "Google सह सुरू ठेवा",
     startProtecting: "मोफत संरक्षण सुरू करा",
-    logout: "बाहेर पडा"
+    logout: "बाहेर पडा",
+    // Translator
+    legalInput: "लीगल इनपुट",
+    simplificationOutput: "सरलीकरण आउटपुट",
+    pasteText: "मजकूर पेस्ट करा",
+    uploadFile: "फाईल अपलोड करा",
+    translateBtn: "साध्या इंग्रजीत भाषांतर करा",
+    extracting: "मजकूर काढत आहे...",
+    // Risks
+    securityAudit: "सुरक्षा ऑडिट",
+    detectTraps: "डिजिटल किंवा कागदी करारांमध्ये लपलेले 'सापळे' शोधा.",
+    initiateAudit: "रिस्क ऑडिट सुरू करा",
+    cameraScan: "📸 स्कॅन",
+    fileTab: "फाईल",
+    pasteTab: "पेस्ट",
+    // Generator
+    draftingReq: "ड्राफ्टिंग आवश्यकता",
+    docType: "दस्तऐवजाचा प्रकार",
+    companyName: "तुमच्या कंपनीचे नाव",
+    counterpartyName: "दुसऱ्या पक्षाचे नाव",
+    purpose: "उद्देश / व्याप्ती",
+    keyTerms: "विशिष्ट मुख्य अटी",
+    generateBtn: "दस्तऐवज तयार करा",
+    // Documents
+    searchDocs: "नावाने दस्तऐवज शोधा...",
+    managedVault: "व्यवस्थापित लीगल वॉल्ट",
+    syncingVault: "वॉल्ट सिंक होत आहे...",
+    noDocs: "दस्तऐवज आढळले नाहीत",
+    // Assistant
+    strategyRoom: "AI रणनीती कक्ष",
+    activeIntelligence: "सक्रिय इंटेलिजेंस",
+    selectDoc: "वॉल्ट दस्तऐवज निवडा",
+    generalConsult: "सामान्य सल्ला"
   },
   kn: {
     welcome: "ನಮಸ್ಕಾರ",
@@ -100,7 +195,39 @@ export const translations: Record<Language, any> = {
     riskHeatmap: "ರಿಸ್ಕ್ ಹೀಟ್‌ಮ್ಯಾಪ್",
     googleSignIn: "Google ನೊಂದಿಗೆ ಮುಂದುವರಿಯಿರಿ",
     startProtecting: "ಉಚಿತವಾಗಿ ರಕ್ಷಣೆ ಪ್ರಾರಂಭಿಸಿ",
-    logout: "ಸೈನ್ ಔಟ್"
+    logout: "ಸೈನ್ ಔಟ್",
+    // Translator
+    legalInput: "ಲೀಗಲ್ ಇನ್ಪುಟ್",
+    simplificationOutput: "ಸರಳೀಕರಣ ಔಟ್‌ಪುಟ್",
+    pasteText: "ಪಠ್ಯವನ್ನು ಅಂಟಿಸಿ",
+    uploadFile: "ಫೈಲ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
+    translateBtn: "ಸರಳ ಇಂಗ್ಲಿಷ್‌ಗೆ ಭಾಷಾಂತರಿಸಿ",
+    extracting: "ಪಠ್ಯವನ್ನು ಹೊರತೆಗೆಯಲಾಗುತ್ತಿದೆ...",
+    // Risks
+    securityAudit: "ಭದ್ರತಾ ಆಡಿಟ್",
+    detectTraps: "ಡಿಜಿಟಲ್ ಅಥವಾ ಕಾಗದದ ಒಪ್ಪಂದಗಳಲ್ಲಿ ಅಡಗಿರುವ 'ಬಲೆಗಳನ್ನು' ಪತ್ತೆಹಚ್ಚಿ.",
+    initiateAudit: "ರಿಸ್ಕ್ ಆಡಿಟ್ ಪ್ರಾರಂಭಿಸಿ",
+    cameraScan: "📸 ಸ್ಕ್ಯಾನ್",
+    fileTab: "ಫೈಲ್",
+    pasteTab: "ಅಂಟಿಸಿ",
+    // Generator
+    draftingReq: "ಡ್ರಾಫ್ಟಿಂಗ್ ಅವಶ್ಯಕತೆಗಳು",
+    docType: "ದಾಖಲೆ ಪ್ರಕಾರ",
+    companyName: "ನಿಮ್ಮ ಕಂಪನಿಯ ಹೆಸರು",
+    counterpartyName: "ಪ್ರತಿಪಕ್ಷದ ಹೆಸರು",
+    purpose: "ಉದ್ದೇಶ / ವ್ಯಾಪ್ತಿ",
+    keyTerms: "ನಿರ್ದಿಷ್ಟ ಪ್ರಮುಖ ನಿಯಮಗಳು",
+    generateBtn: "ದಾಖಲೆಯನ್ನು ರಚಿಸಿ",
+    // Documents
+    searchDocs: "ಹೆಸರಿನ ಮೂಲಕ ದಾಖಲೆಗಳನ್ನು ಹುಡುಕಿ...",
+    managedVault: "ನಿರ್ವಹಿಸಿದ ಲೀಗಲ್ ವಾಲ್ಟ್",
+    syncingVault: "ವಾಲ್ಟ್ ಸಿಂಕ್ ಆಗುತ್ತಿದೆ...",
+    noDocs: "ಯಾವುದೇ ದಾಖಲೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ",
+    // Assistant
+    strategyRoom: "AI ಸ್ಟ್ರಾಟಜಿ ರೂಮ್",
+    activeIntelligence: "ಸಕ್ರಿಯ ಇಂಟೆಲಿಜೆನ್ಸ್",
+    selectDoc: "ವಾಲ್ಟ್ ದಾಖಲೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+    generalConsult: "ಸಾಮಾನ್ಯ ಸಮಾಲೋಚನೆ"
   },
   ta: {
     welcome: "வணக்கம்",
@@ -125,7 +252,39 @@ export const translations: Record<Language, any> = {
     riskHeatmap: "ரிஸ்க் ஹீட்மேப்",
     googleSignIn: "Google மூலம் தொடரவும்",
     startProtecting: "இலவசமாக பாதுகாப்பைத் தொடங்கவும்",
-    logout: "வெளியேறு"
+    logout: "வெளியேறு",
+    // Translator
+    legalInput: "சட்ட உள்ளீடு",
+    simplificationOutput: "எளிமைப்படுத்தல் வெளியீடு",
+    pasteText: "உரையை ஒட்டவும்",
+    uploadFile: "கோப்பை பதிவேற்றவும்",
+    translateBtn: "சாதாரண ஆங்கிலத்திற்கு மொழிபெயர்க்கவும்",
+    extracting: "உரை பிரித்தெடுக்கப்படுகிறது...",
+    // Risks
+    securityAudit: "பாதுகாப்பு தணிக்கை",
+    detectTraps: "டிஜிட்டல் அல்லது காகித ஒப்பந்தங்களில் மறைந்திருக்கும் 'பொறிகளை' கண்டறியவும்.",
+    initiateAudit: "ரிஸ்க் தணிக்கையைத் தொடங்கவும்",
+    cameraScan: "📸 ஸ்கேன்",
+    fileTab: "கோப்பு",
+    pasteTab: "ஒட்டு",
+    // Generator
+    draftingReq: "வரைவுத் தேவைகள்",
+    docType: "ஆவண வகை",
+    companyName: "உங்கள் நிறுவனத்தின் பெயர்",
+    counterpartyName: "மறுதரப்பு பெயர்",
+    purpose: "நோக்கம் / நோக்கம்",
+    keyTerms: "குறிப்பிட்ட முக்கிய விதிமுறைகள்",
+    generateBtn: "ஆவணத்தை உருவாக்கவும்",
+    // Documents
+    searchDocs: "பெயர் மூலம் ஆவணங்களைத் தேடுங்கள்...",
+    managedVault: "நிர்வகிக்கப்பட்ட சட்ட வால்ட்",
+    syncingVault: "வால்ட் ஒத்திசைக்கப்படுகிறது...",
+    noDocs: "ஆவணங்கள் எதுவும் கிடைக்கவில்லை",
+    // Assistant
+    strategyRoom: "AI உத்தி அறை",
+    activeIntelligence: "செயலில் உள்ள நுண்ணறிவு",
+    selectDoc: "வால்ட் ஆவணத்தைத் தேர்ந்தெடுக்கவும்",
+    generalConsult: "பொது ஆலோசனை"
   },
   te: {
     welcome: "నమస్కారం",
@@ -150,7 +309,39 @@ export const translations: Record<Language, any> = {
     riskHeatmap: "రిస్క్ హీట్‌మ్యాప్",
     googleSignIn: "Google తో కొనసాగండి",
     startProtecting: "ఉచితంగా రక్షణ ప్రారంభించండి",
-    logout: "సైన్ అవుట్"
+    logout: "సైన్ అవుట్",
+    // Translator
+    legalInput: "లీగల్ ఇన్‌పుట్",
+    simplificationOutput: "సరళీకరణ అవుట్‌పుట్",
+    pasteText: "టెక్స్ట్ పేస్ట్ చేయండి",
+    uploadFile: "ఫైల్ అప్‌లోడ్ చేయండి",
+    translateBtn: "సాధారణ ఇంగ్లీషులోకి అనువదించండి",
+    extracting: "టెక్స్ట్ సంగ్రహించబడుతోంది...",
+    // Risks
+    securityAudit: "సెక్యూరిటీ ఆడిట్",
+    detectTraps: "డిజిటల్ లేదా పేపర్ కాంట్రాక్టులలో దాగి ఉన్న 'ఉచ్చులను' గుర్తించండి.",
+    initiateAudit: "రిస్క్ ఆడిట్ ప్రారంభించండి",
+    cameraScan: "📸 స్కాన్",
+    fileTab: "ఫైల్",
+    pasteTab: "పేస్ట్",
+    // Generator
+    draftingReq: "డ్రాఫ్టింగ్ అవసరాలు",
+    docType: "పత్రం రకం",
+    companyName: "మీ కంపెనీ పేరు",
+    counterpartyName: "ఎదుటి పక్షం పేరు",
+    purpose: "ఉద్దేశ్యం / పరిధి",
+    keyTerms: "నిర్దిష్ట కీలక నిబంధనలు",
+    generateBtn: "పత్రాన్ని రూపొందించండి",
+    // Documents
+    searchDocs: "పేరు ద్వారా పత్రాలను వెతకండి...",
+    managedVault: "నిర్వహించబడే లీగల్ వాల్ట్",
+    syncingVault: "వాల్ట్ సింక్ అవుతోంది...",
+    noDocs: "పత్రాలు కనుగొనబడలేదు",
+    // Assistant
+    strategyRoom: "AI వ్యూహ గది",
+    activeIntelligence: "యాక్టివ్ ఇంటెలిజెన్స్",
+    selectDoc: "వాల్ట్ పత్రాన్ని ఎంచుకోండి",
+    generalConsult: "సాధారణ సంప్రదింపులు"
   }
 };
 

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useRef } from "react"
@@ -22,10 +21,11 @@ import {
 import { translateLegalJargon, TranslateLegalJargonOutput } from "@/ai/flows/translate-legal-jargon-flow"
 import { useToast } from "@/hooks/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useUser, useFirestore } from "@/firebase"
-import { collection } from "firebase/firestore"
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
+import { collection, doc } from "firebase/firestore"
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { extractTextFromFile } from "@/lib/file-extractor"
+import { t, Language } from "@/lib/translations"
 
 export default function TranslatorPage() {
   const [content, setContent] = useState("")
@@ -37,6 +37,14 @@ export default function TranslatorPage() {
   const { toast } = useToast()
   const { user } = useUser()
   const db = useFirestore()
+
+  const userDocQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, 'users', user.uid);
+  }, [db, user]);
+
+  const { data: userData } = useDoc(userDocQuery);
+  const lang = (userData?.language || 'en') as Language;
 
   const handleTranslate = async () => {
     if (!content.trim()) {
@@ -73,12 +81,6 @@ export default function TranslatorPage() {
           toast({
             title: "Vault Synced",
             description: "Translation has been securely stored in your Legal Vault.",
-          })
-        } else {
-          toast({
-            title: "Identity Pending",
-            description: "Establishing your secure vault. Please ensure you are connected.",
-            variant: "destructive"
           })
         }
       }
@@ -126,14 +128,14 @@ export default function TranslatorPage() {
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-6 bg-white/80 backdrop-blur-md sticky top-0 z-20 shadow-sm">
           <SidebarTrigger />
           <div className="flex items-center gap-2 px-2">
-            <h1 className="text-xl font-bold font-headline text-primary">Jargon Translator</h1>
+            <h1 className="text-xl font-bold font-headline text-primary">{t(lang, 'translator')}</h1>
           </div>
         </header>
         <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             <div className="lg:col-span-5 flex flex-col gap-6">
               <div className="space-y-4">
-                <h2 className="text-2xl font-black text-slate-800">Legal Input</h2>
+                <h2 className="text-2xl font-black text-slate-800">{t(lang, 'legalInput')}</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Paste complex clauses or upload PDF, DOCX, and TXT files. Our AI will break them down into human-readable English.
                 </p>
@@ -141,8 +143,8 @@ export default function TranslatorPage() {
 
               <Tabs defaultValue="paste" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 p-1 bg-slate-200/50 rounded-xl mb-6">
-                  <TabsTrigger value="paste" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">Paste Text</TabsTrigger>
-                  <TabsTrigger value="upload" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">Upload File</TabsTrigger>
+                  <TabsTrigger value="paste" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">{t(lang, 'pasteText')}</TabsTrigger>
+                  <TabsTrigger value="upload" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">{t(lang, 'uploadFile')}</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="paste" className="mt-0">
@@ -181,7 +183,7 @@ export default function TranslatorPage() {
                     <div className="w-20 h-20 rounded-3xl bg-accent/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm">
                       {isExtracting ? <Loader2 className="h-10 w-10 text-accent animate-spin" /> : <Upload className="h-10 w-10 text-accent" />}
                     </div>
-                    <h3 className="text-xl font-bold text-slate-800 mb-2">{isExtracting ? "Extracting Text..." : "Import Document"}</h3>
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">{isExtracting ? t(lang, 'extracting') : t(lang, 'uploadFile')}</h3>
                     <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-8">
                       Supports PDF, DOCX, and TXT files.
                     </p>
@@ -206,12 +208,12 @@ export default function TranslatorPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                    Processing Intelligence...
+                    Processing...
                   </>
                 ) : (
                   <>
                     <Languages className="mr-3 h-5 w-5" />
-                    Translate to Plain English
+                    {t(lang, 'translateBtn')}
                   </>
                 )}
               </Button>
@@ -220,7 +222,7 @@ export default function TranslatorPage() {
             <div className="lg:col-span-7">
               <div className="space-y-6 flex flex-col h-full">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-black text-slate-800">Simplification Output</h2>
+                  <h2 className="text-2xl font-black text-slate-800">{t(lang, 'simplificationOutput')}</h2>
                   {analysis && (
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-widest">
                       <CheckCircle2 className="h-3 w-3" /> Verified by Nyay AI

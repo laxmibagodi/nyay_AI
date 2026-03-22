@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useEffect } from "react"
@@ -27,6 +26,7 @@ import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/no
 import { extractTextFromFile } from "@/lib/file-extractor"
 import { TrapCards } from "@/components/trap-card"
 import Tesseract from 'tesseract.js';
+import { t, Language } from "@/lib/translations"
 
 export default function RisksPage() {
   const [content, setContent] = useState("")
@@ -49,6 +49,7 @@ export default function RisksPage() {
   }, [db, user]);
 
   const { data: userData } = useDoc(userDocQuery);
+  const lang = (userData?.language || 'en') as Language;
 
   const startCamera = async () => {
     setIsCameraActive(true)
@@ -113,7 +114,7 @@ export default function RisksPage() {
     try {
       const result = await identifyContractRisks({ 
         contractContent: content,
-        language: userData?.language || 'English'
+        language: lang === 'hi' ? 'Hindi' : lang === 'mr' ? 'Marathi' : lang === 'ta' ? 'Tamil' : lang === 'te' ? 'Telugu' : lang === 'kn' ? 'Kannada' : 'English'
       })
       setAnalysis(result)
 
@@ -149,22 +150,22 @@ export default function RisksPage() {
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-6 bg-white/80 backdrop-blur-md sticky top-0 z-20 shadow-sm">
           <SidebarTrigger className="md:hidden" />
-          <h1 className="text-xl font-black text-primary">Risk Identifier</h1>
+          <h1 className="text-xl font-black text-primary">{t(lang, 'risks')}</h1>
         </header>
         
         <main className="flex-1 p-4 md:p-8 max-w-4xl mx-auto w-full space-y-8 pb-24">
           
           <div className="space-y-2">
-            <h2 className="text-2xl font-black text-slate-800">Security Audit</h2>
-            <p className="text-sm text-slate-500 font-medium">Detect hidden 'traps' in digital or paper contracts.</p>
+            <h2 className="text-2xl font-black text-slate-800">{t(lang, 'securityAudit')}</h2>
+            <p className="text-sm text-slate-500 font-medium">{t(lang, 'detectTraps')}</p>
           </div>
 
           <Card className="shadow-xl border-none ring-1 ring-slate-100 overflow-hidden rounded-3xl bg-white">
             <Tabs defaultValue="upload" className="w-full">
               <TabsList className="grid w-full grid-cols-3 p-1 bg-slate-100 border-b rounded-none">
-                <TabsTrigger value="upload" className="font-black text-[10px] uppercase tracking-widest py-3">File</TabsTrigger>
-                <TabsTrigger value="paste" className="font-black text-[10px] uppercase tracking-widest py-3">Paste</TabsTrigger>
-                <TabsTrigger value="camera" className="font-black text-[10px] uppercase tracking-widest py-3" onClick={startCamera}>📸 Scan</TabsTrigger>
+                <TabsTrigger value="upload" className="font-black text-[10px] uppercase tracking-widest py-3">{t(lang, 'fileTab')}</TabsTrigger>
+                <TabsTrigger value="paste" className="font-black text-[10px] uppercase tracking-widest py-3">{t(lang, 'pasteTab')}</TabsTrigger>
+                <TabsTrigger value="camera" className="font-black text-[10px] uppercase tracking-widest py-3" onClick={startCamera}>{t(lang, 'cameraScan')}</TabsTrigger>
               </TabsList>
               
               <TabsContent value="upload" className="p-8 m-0 min-h-[300px] flex items-center justify-center">
@@ -184,7 +185,7 @@ export default function RisksPage() {
                   <div className="w-16 h-16 rounded-2xl bg-accent/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     {isExtracting ? <Loader2 className="h-8 w-8 text-accent animate-spin" /> : <Upload className="h-8 w-8 text-accent" />}
                   </div>
-                  <h4 className="font-black text-slate-800 uppercase tracking-widest text-xs">{isExtracting ? "Extracting..." : "Upload Legal File"}</h4>
+                  <h4 className="font-black text-slate-800 uppercase tracking-widest text-xs">{isExtracting ? t(lang, 'extracting') : t(lang, 'uploadFile')}</h4>
                   {fileName && <p className="mt-4 text-xs font-bold text-accent px-3 py-1 bg-accent/5 rounded-full">{fileName}</p>}
                 </div>
               </TabsContent>
@@ -235,7 +236,7 @@ export default function RisksPage() {
                 {isExtracting && (
                   <div className="absolute inset-0 bg-black/50 backdrop-blur-md flex flex-col items-center justify-center text-white">
                     <Loader2 className="h-10 w-10 animate-spin mb-4" />
-                    <p className="font-black uppercase tracking-widest text-xs">Reading Paper...</p>
+                    <p className="font-black uppercase tracking-widest text-xs">{t(lang, 'extracting')}</p>
                   </div>
                 )}
               </TabsContent>
@@ -248,7 +249,7 @@ export default function RisksPage() {
             className="w-full h-16 text-lg font-black shadow-2xl accent-gradient rounded-3xl"
           >
             {isLoading ? <Loader2 className="mr-3 h-6 w-6 animate-spin" /> : <Zap className="mr-3 h-6 w-6" />}
-            Initiate Risk Audit
+            {t(lang, 'initiateAudit')}
           </Button>
 
           {analysis && (

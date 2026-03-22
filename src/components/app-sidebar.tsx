@@ -14,6 +14,9 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
+import { doc } from "firebase/firestore"
+import { t, Language } from "@/lib/translations"
 
 import {
   Sidebar,
@@ -26,34 +29,34 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar"
 
-const navItems = [
+const getNavItems = (lang: Language) => [
   {
-    title: "Dashboard",
+    title: t(lang, 'dashboard'),
     url: "/",
     icon: LayoutDashboard,
   },
   {
-    title: "Jargon Translator",
+    title: t(lang, 'translator'),
     url: "/translator",
     icon: BookText,
   },
   {
-    title: "Risk Identifier",
+    title: t(lang, 'risks'),
     url: "/risks",
     icon: FileSearch,
   },
   {
-    title: "Document Generator",
+    title: t(lang, 'generator'),
     url: "/generator",
     icon: FilePlus2,
   },
   {
-    title: "Legal Assistant",
+    title: t(lang, 'assistant'),
     url: "/assistant",
     icon: MessageSquareQuote,
   },
   {
-    title: "My Documents",
+    title: t(lang, 'vault'),
     url: "/documents",
     icon: Files,
   },
@@ -61,6 +64,17 @@ const navItems = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const { user } = useUser()
+  const db = useFirestore()
+
+  const userDocQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, 'users', user.uid);
+  }, [db, user]);
+
+  const { data: userData } = useDoc(userDocQuery);
+  const lang = (userData?.language || 'en') as Language;
+  const navItems = getNavItems(lang);
 
   return (
     <Sidebar variant="sidebar" collapsible="icon" className="border-r-0 bg-sidebar">
