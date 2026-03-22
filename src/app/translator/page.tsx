@@ -76,8 +76,8 @@ export default function TranslatorPage() {
           })
         } else {
           toast({
-            title: "Vault Unreachable",
-            description: "Establishing intelligence connection. Please retry in a moment.",
+            title: "Identity Pending",
+            description: "Establishing your secure vault. Please ensure you are connected.",
             variant: "destructive"
           })
         }
