@@ -26,6 +26,8 @@ export const translations: Record<Language, any> = {
     startProtecting: "Start Protecting Free",
     logout: "Sign Out",
     error: "Error",
+    change: "Change",
+    changeLanguage: "App Language",
     // Translator
     legalInput: "Legal Input",
     simplificationOutput: "Simplification Output",
@@ -85,6 +87,8 @@ export const translations: Record<Language, any> = {
     startProtecting: "मुफ्त में सुरक्षा शुरू करें",
     logout: "साइन आउट",
     error: "त्रुटि",
+    change: "बदलें",
+    changeLanguage: "ऐप की भाषा",
     // Translator
     legalInput: "लीगल इनपुट",
     simplificationOutput: "सरलीकरण आउटपुट",
@@ -144,6 +148,8 @@ export const translations: Record<Language, any> = {
     startProtecting: "मोफत संरक्षण सुरू करा",
     logout: "बाहेर पडा",
     error: "त्रुटी",
+    change: "बदला",
+    changeLanguage: "अॅपची भाषा",
     // Translator
     legalInput: "लीगल इनपुट",
     simplificationOutput: "सरलीकरण आउटपुट",
@@ -166,7 +172,7 @@ export const translations: Record<Language, any> = {
     counterpartyName: "दुसऱ्या पक्षाचे नाव",
     purpose: "उद्देश / व्याप्ती",
     keyTerms: "विशिष्ट मुख्य अटी",
-    generateBtn: "दस्तावेझ तयार करा",
+    generateBtn: "ದಸ್ತಾವೇಜು ರಚಿಸಿ",
     // Documents
     searchDocs: "नावाने दस्तऐवज शोधा...",
     managedVault: "व्यवस्थापित लीगल वॉल्ट",
@@ -203,6 +209,8 @@ export const translations: Record<Language, any> = {
     startProtecting: "ಉಚಿತವಾಗಿ ರಕ್ಷಣೆ ಪ್ರಾರಂಭಿಸಿ",
     logout: "ಸೈನ್ ಔಟ್",
     error: "ದೋಷ",
+    change: "ಬದಲಿಸಿ",
+    changeLanguage: "ಅಪ್ಲಿಕೇಶನ್ ಭಾಷೆ",
     // Translator
     legalInput: "ಲೀಗಲ್ ಇನ್ಪುಟ್",
     simplificationOutput: "ಸರಳೀಕರಣ ಔಟ್‌ಪುಟ್",
@@ -262,6 +270,8 @@ export const translations: Record<Language, any> = {
     startProtecting: "இலவசமாக பாதுகாப்பைத் தொடங்கவும்",
     logout: "வெளியேறு",
     error: "பிழை",
+    change: "மாற்று",
+    changeLanguage: "பயன்பாட்டு மொழி",
     // Translator
     legalInput: "சட்ட உள்ளீடு",
     simplificationOutput: "எளிமைப்படுத்தல் வெளியீடு",
@@ -321,6 +331,8 @@ export const translations: Record<Language, any> = {
     startProtecting: "ఉచితంగా రక్షణ ప్రారంభించండి",
     logout: "సైన్ అవుట్",
     error: "లోపం",
+    change: "మార్చండి",
+    changeLanguage: "యాప్ భాష",
     // Translator
     legalInput: "లీగల్ ఇన్‌పుట్",
     simplificationOutput: "సరళీకరణ అవుట్‌పుట్",

@@ -10,13 +10,13 @@
     --card-foreground: 224 71% 4%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 71% 4%;
-    --primary: 224 71% 15%; /* Deep Navy */
+    --primary: 224 71% 12%; /* Deep Navy Legal */
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 250 85% 58%; /* Electric Indigo */
+    --accent: 250 85% 58%; /* Professional Indigo */
     --accent-foreground: 210 40% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -74,9 +74,20 @@
 }
 
 .premium-gradient {
-  background: linear-gradient(135deg, #1a237e 0%, #311b92 100%);
+  background: linear-gradient(135deg, #0a192f 0%, #172a45 100%);
 }
 
 .accent-gradient {
-  background: linear-gradient(135deg, #5e27ea 0%, #9c27b0 100%);
+  background: linear-gradient(135deg, #5e27ea 0%, #4b0082 100%);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-slate-50;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
 }

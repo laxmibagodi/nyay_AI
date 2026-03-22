@@ -12,16 +12,25 @@ import {
   CreditCard, 
   LogOut, 
   ShieldCheck, 
-  TrendingUp,
   ChevronRight,
-  Zap
+  Zap,
+  Languages
 } from "lucide-react"
 import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth } from "@/firebase"
 import { doc } from "firebase/firestore"
+import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { useRouter } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { t, Language } from "@/lib/translations"
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu"
 
 const languagesMap: Record<string, string> = {
   hi: "हिंदी",
@@ -29,7 +38,7 @@ const languagesMap: Record<string, string> = {
   kn: "ಕನ್ನಡ",
   ta: "தமிழ்",
   te: "తెలుగు",
-  mr: "मराठी",
+  mr: "मరాठी",
 };
 
 export default function ProfilePage() {
@@ -49,6 +58,13 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     await auth.signOut();
     router.push('/welcome');
+  };
+
+  const handleLanguageChange = (newLang: Language) => {
+    if (!user || !db) return;
+    const userRef = doc(db, 'users', user.uid);
+    updateDocumentNonBlocking(userRef, { language: newLang });
+    localStorage.setItem('nyaya_language', newLang);
   };
 
   const scanProgress = ((userData?.scansUsed || 0) / 50) * 100;
@@ -121,12 +137,44 @@ export default function ProfilePage() {
           </Card>
 
           <section className="space-y-4">
-            <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest px-1">Account Details</h3>
+            <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest px-1">Account & Language</h3>
             <div className="grid gap-3">
+              <div className="bg-white p-5 rounded-2xl flex items-center justify-between border border-slate-100 shadow-sm group">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-accent/10 group-hover:text-accent transition-colors">
+                    <Globe className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-slate-400 mb-0.5">{t(lang, 'changeLanguage') || 'Select Language'}</p>
+                    <p className="text-sm font-bold text-slate-800">{languagesMap[lang] || 'English'}</p>
+                  </div>
+                </div>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="font-black text-accent">
+                      {t(lang, 'change') || 'Change'}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 shadow-2xl border-none ring-1 ring-slate-100">
+                    <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-slate-400">Choose Language</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {Object.entries(languagesMap).map(([code, name]) => (
+                      <DropdownMenuItem 
+                        key={code} 
+                        className="rounded-xl font-bold cursor-pointer"
+                        onClick={() => handleLanguageChange(code as Language)}
+                      >
+                        {name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
               {[
                 { icon: Mail, label: 'Email', value: user?.email || 'Not provided' },
                 { icon: Phone, label: 'Phone', value: user?.phoneNumber || 'Not provided' },
-                { icon: Globe, label: 'Language', value: languagesMap[userData?.language || 'en'] || 'English' },
                 { icon: CreditCard, label: 'Billing', value: 'Google Play / UPI' },
               ].map((item, idx) => (
                 <div key={idx} className="bg-white p-5 rounded-2xl flex items-center justify-between border border-slate-100 shadow-sm group active:scale-[0.98] transition-all">
