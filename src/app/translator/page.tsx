@@ -46,11 +46,20 @@ export default function TranslatorPage() {
   const { data: userData } = useDoc(userDocQuery);
   const lang = (userData?.language || 'en') as Language;
 
+  const languagesFullNames: Record<Language, string> = {
+    hi: "Hindi",
+    en: "English",
+    kn: "Kannada",
+    ta: "Tamil",
+    te: "Telugu",
+    mr: "Marathi"
+  };
+
   const handleTranslate = async () => {
     if (!content.trim()) {
       toast({
-        title: "Content Required",
-        description: "Please paste text or upload a document to translate.",
+        title: t(lang, 'error'),
+        description: t(lang, 'pasteText'),
         variant: "destructive",
       })
       return
@@ -60,11 +69,13 @@ export default function TranslatorPage() {
     setAnalysis(null)
     
     try {
-      const result = await translateLegalJargon({ documentContent: content })
+      const result = await translateLegalJargon({ 
+        documentContent: content,
+        targetLanguage: languagesFullNames[lang]
+      })
       if (result) {
         setAnalysis(result)
         
-        // Save metadata to Firestore Legal Vault
         if (user && db) {
           const docRef = collection(db, "users", user.uid, "documents")
           addDocumentNonBlocking(docRef, {
@@ -79,8 +90,8 @@ export default function TranslatorPage() {
           })
           
           toast({
-            title: "Vault Synced",
-            description: "Translation has been securely stored in your Legal Vault.",
+            title: t(lang, 'vault'),
+            description: t(lang, 'syncingVault'),
           })
         }
       }
@@ -103,7 +114,7 @@ export default function TranslatorPage() {
       try {
         const text = await extractTextFromFile(file)
         setContent(text)
-        toast({ title: "File Loaded", description: `Successfully extracted text from ${file.name}` })
+        toast({ title: t(lang, 'uploadFile'), description: file.name })
       } catch (error: any) {
         setFileName(null)
         toast({ title: "Extraction Failed", description: error.message || "Could not read file.", variant: "destructive" })
@@ -131,13 +142,13 @@ export default function TranslatorPage() {
             <h1 className="text-xl font-bold font-headline text-primary">{t(lang, 'translator')}</h1>
           </div>
         </header>
-        <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
+        <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full pb-24">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             <div className="lg:col-span-5 flex flex-col gap-6">
               <div className="space-y-4">
                 <h2 className="text-2xl font-black text-slate-800">{t(lang, 'legalInput')}</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Paste complex clauses or upload PDF, DOCX, and TXT files. Our AI will break them down into human-readable English.
+                  {t(lang, 'translatorDesc')}
                 </p>
               </div>
 
@@ -159,7 +170,7 @@ export default function TranslatorPage() {
                     </CardHeader>
                     <CardContent className="p-0">
                       <Textarea
-                        placeholder="Paste your legal document content here..."
+                        placeholder={t(lang, 'pasteText')}
                         className="min-h-[400px] w-full border-0 focus-visible:ring-0 p-6 text-sm leading-relaxed bg-white font-body"
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
@@ -273,22 +284,35 @@ export default function TranslatorPage() {
                       
                       {analysis.clauses.map((clause, idx) => (
                         <Card key={idx} className="border-none shadow-md overflow-hidden bg-white hover:shadow-lg transition-all ring-1 ring-slate-100">
-                          <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-100">
-                            <div className="flex-1 p-6 bg-slate-50/50">
-                              <p className="text-[10px] font-black uppercase text-slate-400 mb-3 tracking-widest">Original Jargon</p>
+                          <div className="flex flex-col divide-y divide-slate-100">
+                            <div className="p-6 bg-slate-50/50">
+                              <p className="text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Original Jargon</p>
                               <div className="text-sm italic text-slate-500 leading-relaxed font-body">
                                 "{clause.originalText}"
                               </div>
                             </div>
-                            <div className="flex-[1.5] p-6 bg-white relative">
-                              <div className="absolute top-4 right-4">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-400 hover:text-accent" onClick={() => copyToClipboard(clause.plainLanguage)}>
-                                  <Copy className="h-4 w-4" />
-                                </Button>
+                            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                              <div className="p-6 bg-white relative">
+                                <div className="absolute top-4 right-4">
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-400 hover:text-accent" onClick={() => copyToClipboard(clause.plainLanguage)}>
+                                    <Copy className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                <p className="text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Plain English</p>
+                                <div className="text-base font-semibold text-slate-800 leading-relaxed">
+                                  {clause.plainLanguage}
+                                </div>
                               </div>
-                              <p className="text-[10px] font-black uppercase text-accent mb-3 tracking-widest">Plain English</p>
-                              <div className="text-base font-semibold text-slate-800 leading-relaxed">
-                                {clause.plainLanguage}
+                              <div className="p-6 bg-accent/5 relative">
+                                <div className="absolute top-4 right-4">
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-accent hover:text-accent/80" onClick={() => copyToClipboard(clause.nativeLanguageTranslation)}>
+                                    <Copy className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                <p className="text-[10px] font-black uppercase text-accent mb-2 tracking-widest">{languagesFullNames[lang]} Translation</p>
+                                <div className="text-base font-black text-slate-900 leading-relaxed">
+                                  {clause.nativeLanguageTranslation}
+                                </div>
                               </div>
                             </div>
                           </div>
