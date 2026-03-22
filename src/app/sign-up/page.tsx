@@ -74,6 +74,8 @@ export default function SignUpPage() {
     setIsLoading(true);
     try {
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
@@ -101,9 +103,19 @@ export default function SignUpPage() {
       }
     } catch (error: any) {
       console.error("Google Auth Error:", error);
+      let message = "Could not sign in with Google.";
+      
+      if (error.code === 'auth/operation-not-allowed') {
+        message = "Google Sign-In is not enabled in your Firebase Console.";
+      } else if (error.code === 'auth/popup-blocked') {
+        message = "Sign-in popup was blocked. Please allow popups.";
+      } else if (error.code === 'auth/unauthorized-domain') {
+        message = "This domain is not authorized in Firebase Console.";
+      }
+      
       toast({ 
         title: "Google Sign-In Failed", 
-        description: error.message || "Could not sign in with Google.", 
+        description: message, 
         variant: "destructive" 
       });
     } finally {
