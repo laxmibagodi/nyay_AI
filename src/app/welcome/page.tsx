@@ -2,7 +2,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, ArrowRight, Gavel, Scale, FileText, Bot, Zap, Landmark } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Gavel, Scale, FileText, Bot, Zap, Landmark, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
