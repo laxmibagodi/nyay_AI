@@ -22,6 +22,7 @@ import { doc } from "firebase/firestore"
 import { useRouter } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
+import { t, Language } from "@/lib/translations"
 
 const languagesMap: Record<string, string> = {
   hi: "हिंदी",
@@ -44,13 +45,14 @@ export default function ProfilePage() {
   }, [db, user]);
 
   const { data: userData } = useDoc(userDocQuery);
+  const lang = (userData?.language || 'en') as Language;
 
   const handleLogout = async () => {
     await auth.signOut();
     router.push('/welcome');
   };
 
-  const scanProgress = ((userData?.scansUsed || 0) / 3) * 100;
+  const scanProgress = ((userData?.scansUsed || 0) / 50) * 100;
   const chatProgress = ((userData?.questionsUsed || 0) / 10) * 100;
 
   return (
@@ -61,11 +63,10 @@ export default function ProfilePage() {
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-6 bg-white/80 backdrop-blur-md sticky top-0 z-20 shadow-sm">
           <SidebarTrigger className="md:hidden" />
-          <h1 className="text-xl font-black text-primary">My Profile</h1>
+          <h1 className="text-xl font-black text-primary">{t(lang, 'profile')}</h1>
         </header>
 
         <main className="flex-1 p-4 md:p-8 max-w-4xl mx-auto w-full space-y-8 pb-24">
-          {/* User Header */}
           <section className="flex flex-col items-center text-center space-y-4">
             <div className="w-24 h-24 rounded-3xl premium-gradient flex items-center justify-center text-white shadow-2xl relative">
               <User className="h-12 w-12" />
@@ -81,13 +82,12 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          {/* Plan Status */}
           <Card className="border-none shadow-xl rounded-3xl overflow-hidden ring-1 ring-slate-100 bg-white">
             <div className={`h-2 w-full ${userData?.plan === 'pro' ? 'accent-gradient' : 'bg-slate-200'}`} />
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle className="text-lg font-black text-slate-800">Current Plan</CardTitle>
+                  <CardTitle className="text-lg font-black text-slate-800">{t(lang, 'plan')}</CardTitle>
                   <CardDescription className="font-bold text-slate-400">Manage your subscription</CardDescription>
                 </div>
                 <Badge className={`${userData?.plan === 'pro' ? 'bg-accent' : 'bg-slate-500'} text-white border-none font-black`}>
@@ -99,8 +99,8 @@ export default function ProfilePage() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs font-black uppercase text-slate-500">
-                    <span>Free Scans Used</span>
-                    <span>{userData?.scansUsed || 0} / 3</span>
+                    <span>{t(lang, 'freeScans')}</span>
+                    <span>{userData?.scansUsed || 0} / 50</span>
                   </div>
                   <Progress value={scanProgress} className="h-2" />
                 </div>
@@ -115,13 +115,12 @@ export default function ProfilePage() {
               
               {userData?.plan !== 'pro' && (
                 <Button className="w-full h-14 accent-gradient rounded-2xl font-black text-lg shadow-lg shadow-accent/20" onClick={() => router.push('/pricing')}>
-                  <Zap className="mr-2 h-5 w-5 fill-current" /> Upgrade to PRO
+                  <Zap className="mr-2 h-5 w-5 fill-current" /> {t(lang, 'upgrade')}
                 </Button>
               )}
             </CardContent>
           </Card>
 
-          {/* Account Details */}
           <section className="space-y-4">
             <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest px-1">Account Details</h3>
             <div className="grid gap-3">
@@ -147,17 +146,16 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          {/* Actions */}
           <div className="pt-4 space-y-3">
-            <Button variant="outline" className="w-full h-14 border-slate-200 rounded-2xl font-black text-slate-600 hover:bg-slate-50">
+            <Button variant="outline" className="w-full h-14 border-slate-200 rounded-2xl font-black text-slate-600 hover:bg-slate-50 transition-colors">
               <ShieldCheck className="mr-2 h-5 w-5" /> Privacy & Security
             </Button>
             <Button 
               variant="destructive" 
-              className="w-full h-14 rounded-2xl font-black text-lg bg-red-50 text-red-600 border border-red-100 hover:bg-red-100"
+              className="w-full h-14 rounded-2xl font-black text-lg bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-colors"
               onClick={handleLogout}
             >
-              <LogOut className="mr-2 h-5 w-5" /> Sign Out
+              <LogOut className="mr-2 h-5 w-5" /> {t(lang, 'logout')}
             </Button>
           </div>
         </main>

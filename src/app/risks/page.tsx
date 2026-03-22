@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from "react"
@@ -98,8 +99,8 @@ export default function RisksPage() {
   const handleAnalyze = async () => {
     if (!user || !userData) return;
     
-    if (userData.plan === 'free' && (userData.scansUsed || 0) >= 3) {
-      toast({ title: "Limit Reached", description: "Aapke 3 free scans khatam ho gaye. Upgrade to PRO!" });
+    if (userData.plan === 'free' && (userData.scansUsed || 0) >= 50) {
+      toast({ title: "Limit Reached", description: "Aapke 50 free scans khatam ho gaye. Upgrade to PRO!" });
       return;
     }
 
