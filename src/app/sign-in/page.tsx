@@ -11,7 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ShieldCheck, Mail, Phone, Lock, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import { GoogleAuthProvider, signInWithPopup, doc, getDoc, setDoc, serverTimestamp } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
@@ -225,6 +226,7 @@ export default function SignInPage() {
           Naye ho? <Link href="/sign-up" className="text-primary underline hover:text-accent transition-colors">Sign Up Karo</Link>
         </p>
       </div>
+      <div id="recaptcha-container"></div>
     </div>
   );
 }
