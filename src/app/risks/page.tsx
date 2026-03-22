@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useEffect } from "react"
@@ -35,6 +34,7 @@ export default function RisksPage() {
   const [isExtracting, setIsExtracting] = useState(false)
   const [isCameraActive, setIsCameraActive] = useState(false)
   const [fileName, setFileName] = useState<string | null>(null)
+  const [currentFileMime, setCurrentFileMime] = useState<string>("text/plain")
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -82,6 +82,7 @@ export default function RisksPage() {
 
       setIsExtracting(true)
       const dataUrl = canvasRef.current.toDataURL('image/png')
+      setCurrentFileMime("image/png")
       try {
         const { data: { text } } = await Tesseract.recognize(dataUrl, 'eng+hin')
         setContent(text)
@@ -122,6 +123,7 @@ export default function RisksPage() {
           filename: fileName || `Scan-${new Date().getTime().toString().slice(-6)}.txt`,
           uploadDate: new Date().toISOString(),
           status: "processed",
+          mimeType: currentFileMime,
           description: result.verdict,
           content: content
         })
@@ -172,7 +174,9 @@ export default function RisksPage() {
                   <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.docx,.txt" onChange={async (e) => {
                     const file = e.target.files?.[0]
                     if (file) {
-                      setIsExtracting(true); setFileName(file.name);
+                      setIsExtracting(true); 
+                      setFileName(file.name);
+                      setCurrentFileMime(file.type || "text/plain");
                       try { setContent(await extractTextFromFile(file)); } catch (err) { setFileName(null); } finally { setIsExtracting(false); }
                     }
                   }} />
@@ -189,7 +193,10 @@ export default function RisksPage() {
                   placeholder="Paste contract clauses here..."
                   className="min-h-[300px] border-0 focus-visible:ring-0 p-8 text-base leading-relaxed bg-white rounded-none font-medium"
                   value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                  onChange={(e) => {
+                    setContent(e.target.value);
+                    setCurrentFileMime("text/plain");
+                  }}
                 />
               </TabsContent>
 

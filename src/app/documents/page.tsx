@@ -10,9 +10,7 @@ import {
   Files, 
   Search, 
   Filter, 
-  Download, 
   Trash2, 
-  ExternalLink,
   FileText,
   ShieldCheck,
   ShieldAlert,
@@ -40,7 +38,7 @@ export default function DocumentsPage() {
 
   const filteredDocs = documents?.filter(doc => 
     doc.filename.toLowerCase().includes(search.toLowerCase()) || 
-    doc.status.toLowerCase().includes(search.toLowerCase())
+    (doc.status && doc.status.toLowerCase().includes(search.toLowerCase()))
   ) || []
 
   const handleDelete = (docId: string) => {
@@ -102,7 +100,9 @@ export default function DocumentsPage() {
                       <div>
                         <p className="font-semibold text-sm group-hover:text-accent transition-colors">{docItem.filename}</p>
                         <div className="flex items-center gap-3 mt-1">
-                          <span className="text-xs text-muted-foreground uppercase">{docItem.mimeType.split('/')[1]}</span>
+                          <span className="text-xs text-muted-foreground uppercase">
+                            {docItem.mimeType ? (docItem.mimeType.split('/')[1] || docItem.mimeType) : 'FILE'}
+                          </span>
                           <span className="text-xs text-muted-foreground opacity-50">•</span>
                           <span className="text-xs text-muted-foreground">
                             {docItem.uploadDate ? format(new Date(docItem.uploadDate), 'PPP') : 'N/A'}
@@ -123,7 +123,7 @@ export default function DocumentsPage() {
                           docItem.status === 'failed' ? 'text-red-600' : 
                           docItem.status === 'processed' ? 'text-green-600' : 'text-blue-600'
                         }`}>
-                          {docItem.status}
+                          {docItem.status || 'pending'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
