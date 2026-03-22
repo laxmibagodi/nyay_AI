@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck, Mail, Phone, Lock, Sparkles } from 'lucide-react';
+import { Loader2, ShieldCheck, Mail, Phone, Lock, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -22,6 +22,7 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [popupError, setPopupError] = useState(false);
   
   const auth = useAuth();
   const db = useFirestore();
@@ -43,9 +44,9 @@ export default function SignInPage() {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
+    setPopupError(false);
     try {
       const provider = new GoogleAuthProvider();
-      // Force account selection to avoid auto-login issues
       provider.setCustomParameters({ prompt: 'select_account' });
       
       const result = await signInWithPopup(auth, provider);
@@ -56,7 +57,6 @@ export default function SignInPage() {
         const userSnap = await getDoc(userRef);
 
         if (!userSnap.exists()) {
-          // Initialize new profile for Google user
           await setDoc(userRef, {
             name: user.displayName || "Nyay User",
             email: user.email,
@@ -78,14 +78,13 @@ export default function SignInPage() {
       console.error("Google Auth Error:", error);
       let message = "Could not sign in with Google.";
       
-      if (error.code === 'auth/operation-not-allowed') {
+      if (error.code === 'auth/popup-blocked') {
+        setPopupError(true);
+        message = "Sign-in popup was blocked by your browser. Please allow popups for this site and try again.";
+      } else if (error.code === 'auth/operation-not-allowed') {
         message = "Google Sign-In is not enabled in your Firebase Console.";
-      } else if (error.code === 'auth/popup-blocked') {
-        message = "Sign-in popup was blocked. Please allow popups for this site.";
-      } else if (error.code === 'auth/popup-closed-by-user') {
-        message = "Sign-in window was closed before completion.";
       } else if (error.code === 'auth/unauthorized-domain') {
-        message = "This domain is not authorized in Firebase Console.";
+        message = "This domain is not authorized in Firebase Console Settings.";
       }
       
       toast({ 
@@ -137,6 +136,16 @@ export default function SignInPage() {
           <h1 className="text-4xl font-black text-primary tracking-tighter">Nyaya AI</h1>
           <p className="text-slate-500 font-bold">Secure Legal Access for Small Business</p>
         </div>
+
+        {popupError && (
+          <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex gap-3 items-start animate-in zoom-in-95 duration-300">
+            <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="text-xs font-bold text-amber-800 leading-relaxed">
+              <p className="uppercase tracking-widest text-[10px] mb-1">Action Required</p>
+              Your browser blocked the sign-in window. Look for a "Popup blocked" icon in your address bar and choose "Always allow popups from this site".
+            </div>
+          </div>
+        )}
 
         <div className="space-y-4">
           <Button 

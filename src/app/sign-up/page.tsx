@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Loader2, ShieldCheck, Mail, Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -22,6 +22,7 @@ export default function SignUpPage() {
     password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [popupError, setPopupError] = useState(false);
   
   const auth = useAuth();
   const db = useFirestore();
@@ -37,12 +38,10 @@ export default function SignUpPage() {
 
     setIsLoading(true);
     try {
-      // Create Auth Account
       await initiateEmailSignUp(auth, formData.email, formData.password);
       
       const currentUser = auth.currentUser;
       if (currentUser && db) {
-        // Create Firestore User Document
         await setDoc(doc(db, 'users', currentUser.uid), {
           name: formData.name,
           email: formData.email,
@@ -72,6 +71,7 @@ export default function SignUpPage() {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
+    setPopupError(false);
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
@@ -105,10 +105,11 @@ export default function SignUpPage() {
       console.error("Google Auth Error:", error);
       let message = "Could not sign in with Google.";
       
-      if (error.code === 'auth/operation-not-allowed') {
+      if (error.code === 'auth/popup-blocked') {
+        setPopupError(true);
+        message = "Sign-in popup was blocked. Please allow popups for this site.";
+      } else if (error.code === 'auth/operation-not-allowed') {
         message = "Google Sign-In is not enabled in your Firebase Console.";
-      } else if (error.code === 'auth/popup-blocked') {
-        message = "Sign-in popup was blocked. Please allow popups.";
       } else if (error.code === 'auth/unauthorized-domain') {
         message = "This domain is not authorized in Firebase Console.";
       }
@@ -133,6 +134,16 @@ export default function SignUpPage() {
           <h1 className="text-4xl font-black text-primary tracking-tighter">Join Nyay AI</h1>
           <p className="text-slate-500 font-bold">Start protecting your business today.</p>
         </div>
+
+        {popupError && (
+          <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex gap-3 items-start animate-in zoom-in-95 duration-300">
+            <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="text-xs font-bold text-amber-800 leading-relaxed">
+              <p className="uppercase tracking-widest text-[10px] mb-1">Action Required</p>
+              Your browser blocked the Google window. Please click the icon in your address bar to "Always allow popups" for Nyay AI.
+            </div>
+          </div>
+        )}
 
         <Card className="border-none shadow-2xl rounded-3xl ring-1 ring-slate-100 bg-white">
           <CardHeader>
