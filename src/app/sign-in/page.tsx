@@ -45,6 +45,7 @@ export default function SignInPage() {
     setIsLoading(true);
     try {
       const provider = new GoogleAuthProvider();
+      // Ensure popup works in this environment
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
@@ -53,10 +54,11 @@ export default function SignInPage() {
         const userSnap = await getDoc(userRef);
 
         if (!userSnap.exists()) {
+          // Initialize new profile for Google user
           await setDoc(userRef, {
-            name: user.displayName,
+            name: user.displayName || "Nyay User",
             email: user.email,
-            phone: null,
+            phone: user.phoneNumber || null,
             language: "hi",
             businessType: "",
             plan: "free",
@@ -71,7 +73,21 @@ export default function SignInPage() {
         }
       }
     } catch (error: any) {
-      toast({ title: "Google Sign-In Failed", description: error.message, variant: "destructive" });
+      console.error("Google Auth Error:", error);
+      let message = "Could not sign in with Google.";
+      if (error.code === 'auth/operation-not-allowed') {
+        message = "Google Sign-In is not enabled in Firebase Console.";
+      } else if (error.code === 'auth/popup-blocked') {
+        message = "Sign-in popup was blocked by your browser.";
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        message = "Sign-in window was closed before completion.";
+      }
+      
+      toast({ 
+        title: "Google Sign-In Failed", 
+        description: message, 
+        variant: "destructive" 
+      });
     } finally {
       setIsLoading(false);
     }

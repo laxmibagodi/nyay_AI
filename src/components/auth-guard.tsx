@@ -34,20 +34,30 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     // 2. Logged in logic
     if (user) {
-      // If on a login page but already logged in -> Go Home
+      // If on a login page but already logged in -> Check Onboarding
       if (['/sign-in', '/sign-up', '/welcome'].includes(pathname)) {
-        router.push('/');
+        if (!isUserDataLoading) {
+           if (!userData || !userData.onboardingComplete) {
+              router.push('/onboarding');
+           } else {
+              router.push('/');
+           }
+        }
         return;
       }
 
       // 3. Onboarding Check: If logged in but not onboarded -> Go to Onboarding
-      if (!isUserDataLoading && userData && !userData.onboardingComplete && pathname !== '/onboarding') {
-        router.push('/onboarding');
+      // We check for !isUserDataLoading to ensure we have the most current data
+      if (!isUserDataLoading && pathname !== '/onboarding' && !publicRoutes.includes(pathname)) {
+        if (!userData || !userData.onboardingComplete) {
+          router.push('/onboarding');
+        }
       }
     }
   }, [user, isUserLoading, pathname, router, userData, isUserDataLoading]);
 
-  if (isUserLoading) {
+  // Loading state for initial auth check or when user is logging in
+  if (isUserLoading || (user && isUserDataLoading && pathname !== '/onboarding')) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4">
