@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -9,7 +10,7 @@ import { doc } from 'firebase/firestore';
 import { t, Language } from '@/lib/translations';
 
 const getNavItems = (lang: Language) => [
-  { label: t(lang, 'dashboard'), href: '/', icon: LayoutDashboard },
+  { label: t(lang, 'dashboard'), href: '/dashboard', icon: LayoutDashboard },
   { label: t(lang, 'vault'), href: '/documents', icon: Files },
   { label: t(lang, 'assistant'), href: '/assistant', icon: MessageSquareQuote },
   { label: t(lang, 'profile'), href: '/profile', icon: User },
@@ -29,7 +30,8 @@ export function BottomNav() {
   const lang = (userData?.language || 'en') as Language;
   const navItems = getNavItems(lang);
   
-  if (['/sign-in', '/sign-up', '/verify', '/onboarding'].includes(pathname)) return null;
+  // Do not show bottom nav on auth or landing pages
+  if (['/', '/sign-in', '/sign-up', '/verify', '/onboarding'].includes(pathname)) return null;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 h-[4.5rem] bg-white border-t border-slate-100 flex items-center justify-around px-2 md:hidden">

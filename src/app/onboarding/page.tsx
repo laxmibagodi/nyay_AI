@@ -43,7 +43,7 @@ export default function OnboardingPage() {
       onboardingComplete: true
     });
     localStorage.setItem('nyaya_language', selection.language);
-    router.push('/');
+    router.push('/dashboard');
   };
 
   return (

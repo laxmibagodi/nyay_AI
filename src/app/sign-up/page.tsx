@@ -98,7 +98,7 @@ export default function SignUpPage() {
           });
           router.push('/onboarding');
         } else {
-          router.push('/');
+          router.push('/dashboard');
         }
       }
     } catch (error: any) {

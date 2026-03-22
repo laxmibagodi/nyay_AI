@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -32,7 +33,7 @@ import {
 const getNavItems = (lang: Language) => [
   {
     title: t(lang, 'dashboard'),
-    url: "/",
+    url: "/dashboard",
     icon: LayoutDashboard,
   },
   {

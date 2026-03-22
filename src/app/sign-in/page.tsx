@@ -34,7 +34,7 @@ export default function SignInPage() {
     setIsLoading(true);
     try {
       await initiateEmailSignIn(auth, email, password);
-      router.push('/');
+      router.push('/dashboard');
     } catch (error: any) {
       toast({ title: "Login Failed", description: error.message, variant: "destructive" });
     } finally {
@@ -71,7 +71,7 @@ export default function SignInPage() {
           });
           router.push('/onboarding');
         } else {
-          router.push('/');
+          router.push('/dashboard');
         }
       }
     } catch (error: any) {
@@ -118,7 +118,7 @@ export default function SignInPage() {
     setIsLoading(true);
     try {
       await confirmationResult.confirm(otp);
-      router.push('/');
+      router.push('/dashboard');
     } catch (error: any) {
       toast({ title: "Invalid OTP", description: "Try again.", variant: "destructive" });
     } finally {
